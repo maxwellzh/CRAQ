@@ -10,12 +10,20 @@
 
 ```
 $python .\chat_cal.py -h
+usage:
+python ./chat_cal.py [-i file_i | -o file_o | -k word | -c]
+
 -i[--file_input_loc]            location of input file
 -o[--file_output_loc]           location of output file
--k[--key_word]                 the key word to search
+-k[--key_word]                  the key word to search
 -c[--enable_count]              enable count of messages
-```
 
+-h[--help]              to show this info
+```
+`-i`指定输入文件位置
+`-o`指定输出文件位置
+`-k`关键词检索
+`-c`启用总消息记录
 
 
 #### 使用示例

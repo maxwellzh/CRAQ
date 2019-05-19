@@ -120,10 +120,12 @@ def get_info(line):
 
 
 def usage():
+    print("usage:\npython ./chat_cal.py [-i file_i | -o file_o | -k word | -c]\n")
     print("-i[--file_input_loc]\t\tlocation of input file")
     print("-o[--file_output_loc]\t\tlocation of output file")
     print("-k[--key_word]\t\t\tthe key word to search")
     print("-c[--enable_count]\t\tenable count of messages")
+    print("\n-h[--help]\t\tto show this info")
 
 
 def proportion_visualize(total, this, max_count):

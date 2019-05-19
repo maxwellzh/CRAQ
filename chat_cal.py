@@ -10,7 +10,7 @@ import getopt
 
 class member(object):
     def __init__(self, ID, name):
-        self.name = name
+        self.name = name if ID != '80000000' else '匿名用户'
         self.id = ID
         self.count = 0
         '''
@@ -46,7 +46,7 @@ class member(object):
                                      ][Time[3]][Time[4]][Time[5]] += line
 
     def new_name(self, name):
-        self.name = name
+        self.name = name if self.id != '80000000' else '匿名用户'
 
     def get_talks(self, method='date', date=[], key_word=''):
         times = 0
@@ -104,9 +104,10 @@ def time_dict(talks, Time):
 def get_info(line):
     info = line.split(' ')
     if len(info) > 3:
-        info = info[:2] + [info[2] + info[3]]
+        info = info[:2] + [''.join(info[2:])]
     Time = info[0].split('-')+info[1].split(':')
     Time = [int(s) for s in Time]
+    #print(Time)
     name = re.search(r'.*(\(|<)', info[2]).group()[:-1]
     ID = re.search(r'(\(|<).*(\)|>)', info[2]).group()[1:-1]
     if len(ID) == 0:
@@ -123,9 +124,16 @@ def usage():
     print("-c[--enable_count]\t\tenable count of messages Default: False")
 
 
+def proportion_visualize(total, this, max_count):
+    proportion = float(this/total)
+    width = int(60*proportion)
+    #return '占比%-5.2f%% %s%s' % (proportion*100, '.'*width, ' '*int(60*(max_count-this)/total))
+    return '%s%s ' % ('.'*width, ' '*int(60*(max_count-this)/total))
+
+
 def main():
     opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c:', ['help',
-                                                              'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
+                                                             'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
     file_loc_input = ''
     file_loc_output = ''
     key_word = ''
@@ -147,6 +155,7 @@ def main():
     members = {}
     member_talking = None
     count = 0
+    max_count = int(0)
 
     with open(file_loc_input, 'rt', encoding='utf-8') as chat_record:
         for line in chat_record:
@@ -176,20 +185,21 @@ def main():
     for ID in members.keys():
         count_ID[ID], talks = members[ID].get_talks(
             method='key word', key_word=key_word)
+        max_count = max([max_count, count_ID[ID]])
         if talks != '':
             count_all += count_ID[ID]
 
     print("\n检索消息记录%d条" % (count))
     if enable_count:
         for ID in members.keys():
-            print('%-8s\t发消息%d条\t占比%.2f%%' %
-                  (members[ID].name, members[ID].count, members[ID].count/count*100))
+            print('发消息%d%s条\t%s\t%s' %
+                  (members[ID].count, ' '*(len(str(count))-len(str(members[ID].count))), proportion_visualize(count, members[ID].count, count/2), members[ID].name))
 
-    print("\n关键词“%s”出现%d次\n" % (key_word, count_all))
+    print("\n关键词\"%s\"出现%d次\n" % (key_word, count_all))
     for ID in count_ID.keys():
         if count_ID[ID] != 0:
-            print("%-8s\t发了%d次“%s”\t占比%.2f%%" %
-                  (members[ID].name, count_ID[ID], key_word, count_ID[ID]/count_all*100))
+            print("发送\"%s\"次数%d%s\t%s\t%s" % (
+                key_word, count_ID[ID], ' '*(len(str(max_count))-len(str(count_ID[ID]))), proportion_visualize(count_all, count_ID[ID], max_count), members[ID].name))
     print('\n')
 
     if len(file_loc_output) > 0:

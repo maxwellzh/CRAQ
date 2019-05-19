@@ -119,12 +119,12 @@ def get_info(line):
 def usage():
     print("-i[--file_input_loc]\t\tlocation of input file")
     print("-o[--file_output_loc]\t\tlocation of output file")
-    print("-kw[--key_word]\t\t\tthe key word to search")
+    print("-k[--key_word]\t\t\tthe key word to search")
     print("-c[--enable_count]\t\tenable count of messages Default: False")
 
 
 def main():
-    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-kw:-c:', ['help',
+    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c:', ['help',
                                                               'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
     file_loc_input = ''
     file_loc_output = ''
@@ -136,7 +136,7 @@ def main():
             file_loc_input = str(value)
         elif op == "-o" or op == "--file_output_loc":
             file_loc_output = str(value)
-        elif op == "-kw" or op == "--key_word":
+        elif op == "-k" or op == "--key_word":
             key_word = str(value)
         elif op == "-c" or op == "--enable_count":
             enable_count = True if value == 'True' else False

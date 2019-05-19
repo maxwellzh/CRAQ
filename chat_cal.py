@@ -2,9 +2,11 @@
 message type:
 2019-xx-xx xx:xx:xx NAME(QQ_ID)
 '''
+import sys
 import re
 import operator
-import sys
+import getopt
+
 
 class member(object):
     def __init__(self, ID, name):
@@ -38,7 +40,7 @@ class member(object):
             this = this[t]
         if Time[-1] not in this:
             this[Time[-1]] = ''
-            
+
         #time_dict(self.talks, Time)
         self.talks[Time[0]][Time[1]][Time[2]
                                      ][Time[3]][Time[4]][Time[5]] += line
@@ -113,11 +115,40 @@ def get_info(line):
     # Time = [year, month, day, hour, minute, second]
     return ID, name, Time
 
+
+def usage():
+    print("-i[--file_input_loc]\t\tlocation of input file")
+    print("-o[--file_output_loc]\t\tlocation of output file")
+    print("-kw[--key_word]\t\t\tthe key word to search")
+    print("-c[--enable_count]\t\tenable count of messages Default: False")
+
+
 def main():
+    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-kw:-c:', ['help',
+                                                              'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
+    file_loc_input = ''
+    file_loc_output = ''
+    key_word = ''
+    enable_count = False
+
+    for op, value in opts:
+        if op == "-i" or op == "--file_input_loc":
+            file_loc_input = str(value)
+        elif op == "-o" or op == "--file_output_loc":
+            file_loc_output = str(value)
+        elif op == "-kw" or op == "--key_word":
+            key_word = str(value)
+        elif op == "-c" or op == "--enable_count":
+            enable_count = True if value == 'True' else False
+        elif op == "-h" or op == "--help":
+            usage()
+            sys.exit()
+
     members = {}
     member_talking = None
     count = 0
-    with open(str(sys.argv[1]), 'rt', encoding='utf-8') as chat_record:
+
+    with open(file_loc_input, 'rt', encoding='utf-8') as chat_record:
         for line in chat_record:
             if line[:4] != '2019' or (line[-2] != ')' and line[-2] != '>'):
                 # not a new message
@@ -140,34 +171,36 @@ def main():
                 members[ID].count += 1
                 member_talking = members[ID]
 
-    key_word = sys.argv[2]
     count_all = int(0)
     count_ID = {}
     for ID in members.keys():
-        count_ID[ID], talks = members[ID].get_talks(method='key word', key_word=key_word)
+        count_ID[ID], talks = members[ID].get_talks(
+            method='key word', key_word=key_word)
         if talks != '':
             count_all += count_ID[ID]
 
     print("\n检索消息记录%d条" % (count))
-    for ID in members.keys():
-        print('%-8s\t发消息%d条\t占比%.2f%%' % (members[ID].name, members[ID].count, members[ID].count/count*100))
-    
+    if enable_count:
+        for ID in members.keys():
+            print('%-8s\t发消息%d条\t占比%.2f%%' %
+                  (members[ID].name, members[ID].count, members[ID].count/count*100))
+
     print("\n关键词“%s”出现%d次\n" % (key_word, count_all))
     for ID in count_ID.keys():
         if count_ID[ID] != 0:
             print("%-8s\t发了%d次“%s”\t占比%.2f%%" %
-                (members[ID].name, count_ID[ID], key_word, count_ID[ID]/count_all*100))
+                  (members[ID].name, count_ID[ID], key_word, count_ID[ID]/count_all*100))
     print('\n')
 
-
-    if len(sys.argv) > 3:
-        with open(sys.argv[3], 'wt', encoding='utf-8') as file_dealed:
+    if len(file_loc_output) > 0:
+        with open(file_loc_output, 'wt', encoding='utf-8') as file_dealed:
             for ID in members.keys():
                 file_dealed.write('QQ ID/EMAIL: %s\n' % (ID))
                 file_dealed.write('QQ NAME: %s\n' % (members[ID].name))
                 for line in traversing_dict(members[ID].talks):
                     #print(date)
-                    file_dealed.write(line)          
+                    file_dealed.write(line)
+
 
 if __name__ == "__main__":
     main()

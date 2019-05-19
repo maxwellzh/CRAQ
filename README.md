@@ -5,7 +5,11 @@
 目前仅支持`.txt`文本格式，使用方式
 
 ```
-python .\chat_cal.py <resource file> <key word> [output file] 
+$python .\chat_cal.py -h
+-i[--file_input_loc]            location of input file
+-o[--file_output_loc]           location of output file
+-kw[--key_word]                 the key word to search
+-c[--enable_count]              enable count of messages Default: False
 ```
 
 `<resource file>`指定输入文件位置

@@ -52,10 +52,12 @@ class member(object):
         times = 0
         if method == 'key word':
             result = ''
-            for message in traversing_dict(self.talks):
+            for _, message in traversing_dict(self.talks):
                 if key_word in message:
                     result += message
-                    times += 1
+                times += message.count(key_word)
+                #print(key)
+                #sys.exit()
             return times, result
         elif method == 'date':
             this = self.talks
@@ -67,7 +69,7 @@ class member(object):
                     return times, result
                 this = this[t]
             if date[-1] in this:
-                for message in traversing_dict(this[date[-1]]):
+                for _, message in traversing_dict(this[date[-1]]):
                     result += message
                     times += 1
                 return times, result
@@ -78,12 +80,12 @@ class member(object):
 def traversing_dict(Dict):
     if type(Dict) is not dict:
         return Dict
-    for _, value in Dict.items():
+    for key, value in Dict.items():
         if type(value) is not dict:
-            yield value
+            yield str(key), value
         else:
-            for x in traversing_dict(value):
-                yield x
+            for key_x, x in traversing_dict(value):
+                yield str(key)+'-'+key_x, x
 
 
 def time_dict(talks, Time):
@@ -104,7 +106,7 @@ def time_dict(talks, Time):
 def get_info(line):
     info = line.split(' ')
     if len(info) > 3:
-        info = info[:2] + [''.join(info[2:])]
+        info = info[:2] + [' '.join(info[2:])]
     Time = info[0].split('-')+info[1].split(':')
     Time = [int(s) for s in Time]
     #print(Time)
@@ -121,18 +123,19 @@ def usage():
     print("-i[--file_input_loc]\t\tlocation of input file")
     print("-o[--file_output_loc]\t\tlocation of output file")
     print("-k[--key_word]\t\t\tthe key word to search")
-    print("-c[--enable_count]\t\tenable count of messages Default: False")
+    print("-c[--enable_count]\t\tenable count of messages")
 
 
 def proportion_visualize(total, this, max_count):
     proportion = float(this/total)
-    width = int(60*proportion)
-    #return '占比%-5.2f%% %s%s' % (proportion*100, '.'*width, ' '*int(60*(max_count-this)/total))
-    return '%s%s ' % ('.'*width, ' '*int(60*(max_count-this)/total))
+    width_this = int(60*proportion)
+    width_max = int(60*max_count/total)
+    
+    return '%s%s' % ('.'*width_this, ' '*(width_max-width_this))
 
 
 def main():
-    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c:', ['help',
+    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c', ['help',
                                                              'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
     file_loc_input = ''
     file_loc_output = ''
@@ -147,7 +150,7 @@ def main():
         elif op == "-k" or op == "--key_word":
             key_word = str(value)
         elif op == "-c" or op == "--enable_count":
-            enable_count = True if value == 'True' else False
+            enable_count = True
         elif op == "-h" or op == "--help":
             usage()
             sys.exit()
@@ -155,7 +158,8 @@ def main():
     members = {}
     member_talking = None
     count = 0
-    max_count = int(0)
+    max_count_word = int(0)
+    max_count_message = int(0)
 
     with open(file_loc_input, 'rt', encoding='utf-8') as chat_record:
         for line in chat_record:
@@ -178,37 +182,44 @@ def main():
 
                 #members[ID].add_message(Time)
                 members[ID].count += 1
+                max_count_message = max([max_count_message, members[ID].count])
                 member_talking = members[ID]
-
-    count_all = int(0)
-    count_ID = {}
-    for ID in members.keys():
-        count_ID[ID], talks = members[ID].get_talks(
-            method='key word', key_word=key_word)
-        max_count = max([max_count, count_ID[ID]])
-        if talks != '':
-            count_all += count_ID[ID]
 
     print("\n检索消息记录%d条" % (count))
     if enable_count:
         for ID in members.keys():
             print('发消息%d%s条\t%s\t%s' %
-                  (members[ID].count, ' '*(len(str(count))-len(str(members[ID].count))), proportion_visualize(count, members[ID].count, count/2), members[ID].name))
+                  (members[ID].count, ' '*(len(str(count))-len(str(members[ID].count))), \
+                      proportion_visualize(count, members[ID].count, max_count_message), members[ID].name))
+    
+    if key_word != '':
+        count_all = int(0)
+        count_ID = {}
+        for ID in members.keys():
+            count_ID[ID], talks = members[ID].get_talks(
+                method='key word', key_word=key_word)
+            max_count_word = max([max_count_word, count_ID[ID]])
+            if talks != '':
+                count_all += count_ID[ID]
 
-    print("\n关键词\"%s\"出现%d次\n" % (key_word, count_all))
-    for ID in count_ID.keys():
-        if count_ID[ID] != 0:
-            print("发送\"%s\"次数%d%s\t%s\t%s" % (
-                key_word, count_ID[ID], ' '*(len(str(max_count))-len(str(count_ID[ID]))), proportion_visualize(count_all, count_ID[ID], max_count), members[ID].name))
-    print('\n')
+        print("\n关键词\"%s\"出现%d次\n" % (key_word, count_all))
+        for ID in count_ID.keys():
+            if count_ID[ID] != 0:
+                print("发送\"%s\"次数%d%s\t%s\t%s" % (
+                    key_word, count_ID[ID], ' '*(len(str(max_count_word))-len(str(count_ID[ID]))),\
+                         proportion_visualize(count_all, count_ID[ID], max_count_word), members[ID].name))
+        print('\n')
 
     if len(file_loc_output) > 0:
         with open(file_loc_output, 'wt', encoding='utf-8') as file_dealed:
             for ID in members.keys():
                 file_dealed.write('QQ ID/EMAIL: %s\n' % (ID))
                 file_dealed.write('QQ NAME: %s\n' % (members[ID].name))
-                for line in traversing_dict(members[ID].talks):
-                    #print(date)
+                for Time, line in traversing_dict(members[ID].talks):
+                    Time = Time.split('-')
+                    Time = Time[0]+'-'+Time[1]+'-'+Time[2] + \
+                        ' '+Time[3]+':'+Time[4]+':'+Time[5] + '\n'
+                    file_dealed.write(Time)
                     file_dealed.write(line)
 
 

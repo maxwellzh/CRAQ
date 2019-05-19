@@ -2,7 +2,7 @@
 
 #### 介绍
 
-检索出聊天记录内某关键词出现次数，及每个发言成员发言中出现该词次数，目前程序中1次发言最多计数1次.
+检索出聊天记录内某关键词出现次数，及每个发言成员发言中出现该词次数.
 
 开发环境 Python `3.6.7`
 
@@ -13,7 +13,7 @@ $python .\chat_cal.py -h
 -i[--file_input_loc]            location of input file
 -o[--file_output_loc]           location of output file
 -k[--key_word]                 the key word to search
--c[--enable_count]              enable count of messages Default: False
+-c[--enable_count]              enable count of messages
 ```
 
 

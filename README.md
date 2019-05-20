@@ -9,16 +9,18 @@
 目前仅支持`.txt`文本格式，使用方式
 
 ```
-$python .\chat_cal.py -h
-usage:
-python ./chat_cal.py [-i file_i | -o file_o | -k word | -c]
+$ python .\chat_cal.py -h
 
--i[--file_input_loc]            location of input file
--o[--file_output_loc]           location of output file
--k[--key_word]                  the key word to search
--c[--enable_count]              enable count of messages
+Usage:
+  python chat_cal.py -i <input file> [options] [...]
 
--h[--help]              to show this info
+General Options:
+  -i, --input_loc <path>        Location of input file.
+  -o, --output_loc <path>       Location of output file.
+  -k, --key_word <string>       The key word to search.
+  -c, --count_enable            Enable count of messages.
+  -h, --help                    Show this info.
+
 ```
 `-i`指定输入文件位置
 `-o`指定输出文件位置

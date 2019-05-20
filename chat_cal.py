@@ -131,12 +131,13 @@ def get_info(line):
 
 def usage():
     print(
-        "usage:\npython ./chat_cal.py [-i file_i | -o file_o | -k word | -c]\n")
-    print("-i[--file_input_loc]\t\tlocation of input file")
-    print("-o[--file_output_loc]\t\tlocation of output file")
-    print("-k[--key_word]\t\t\tthe key word to search")
-    print("-c[--enable_count]\t\tenable count of messages")
-    print("\n-h[--help]\t\tto show this info")
+        "\nUsage:\n  python chat_cal.py -i <input file> [options] [...]\n")
+    print("General Options:")
+    print("  -i, --input_loc <path>\tLocation of input file.")
+    print("  -o, --output_loc <path>\tLocation of output file.")
+    print("  -k, --key_word <string>\tThe key word to search.")
+    print("  -c, --count_enable\t\tEnable count of messages.")
+    print("  -h, --help\t\t\tShow this info.\n")
 
 
 def proportion_visualize(total, this, max_count):
@@ -179,14 +180,14 @@ def timer(Time, unit, step):
 
 def main():
     opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c', \
-        ['help', 'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
+        ['help', 'input_loc', 'output_loc', 'key_word', 'count_enable'])
     file_loc_input = ''
     file_loc_output = ''
     key_word = ''
     enable_count = False
 
     for op, value in opts:
-        if op == "-i" or op == "--file_input_loc":
+        if op == "-i" or op == "--input_loc":
             file_loc_input = str(value)
             if not path.isfile(file_loc_input):
                 print("File %s not exist!" % (file_loc_input))
@@ -194,11 +195,11 @@ def main():
             elif len(file_loc_input) < 5 or file_loc_input[-4:] != '.txt':
                 print("Input file supposed to be .txt format.")
                 sys.exit()
-        elif op == "-o" or op == "--file_output_loc":
+        elif op == "-o" or op == "--output_loc":
             file_loc_output = str(value)
         elif op == "-k" or op == "--key_word":
             key_word = str(value)
-        elif op == "-c" or op == "--enable_count":
+        elif op == "-c" or op == "--count_enable":
             enable_count = True
         elif op == "-h" or op == "--help":
             usage()

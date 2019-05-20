@@ -1,12 +1,19 @@
+#!usr/bin/python
+#-*- coding:utf-8 -*-
 '''
 message type:
 2019-xx-xx xx:xx:xx NAME(QQ_ID)
 '''
 import sys
+import os.path as path
 import re
 import operator
 import getopt
+import datetime as dt
+import matplotlib.pyplot as plt
 
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
 
 class member(object):
     def __init__(self, ID, name):
@@ -75,6 +82,9 @@ class member(object):
                 return times, result
             else:
                 return times, result
+        else:
+            print("member.get_talks(...) got an illegal arg.")
+            sys.exit()
 
 
 def traversing_dict(Dict):
@@ -120,7 +130,8 @@ def get_info(line):
 
 
 def usage():
-    print("usage:\npython ./chat_cal.py [-i file_i | -o file_o | -k word | -c]\n")
+    print(
+        "usage:\npython ./chat_cal.py [-i file_i | -o file_o | -k word | -c]\n")
     print("-i[--file_input_loc]\t\tlocation of input file")
     print("-o[--file_output_loc]\t\tlocation of output file")
     print("-k[--key_word]\t\t\tthe key word to search")
@@ -129,16 +140,46 @@ def usage():
 
 
 def proportion_visualize(total, this, max_count):
+
     proportion = float(this/total)
-    width_this = int(60*proportion)
-    width_max = int(60*max_count/total)
-    
+    #width_this = int(60*proportion)
+    #width_max = int(60*max_count/total)
+    width_this = int(this/max_count*50)
+    width_max = int(50)
+
     return '%s%s' % ('.'*width_this, ' '*(width_max-width_this))
 
+def timer(Time, unit, step):
+    Time = dt.datetime(Time[0], Time[1], Time[2], \
+        Time[3], Time[4], Time[5])
+    UNIT = {
+        'day': 0,
+        'hour': 0,
+        'minute': 0,
+        'second': 0}
+    if unit not in UNIT:
+        print("Timer unit input error in timer(...).")
+        sys.exit()
+    else:
+        UNIT[unit] += step
+    Time += dt.timedelta(days=UNIT['day'],\
+                hours=UNIT['hour'],\
+                    minutes=UNIT['minute'],\
+                        seconds=UNIT['second'])
+    Time = [
+        Time.year,
+        Time.month,
+        Time.day,
+        Time.hour,
+        Time.minute,
+        Time.second
+    ]
+
+    return Time
 
 def main():
-    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c', ['help',
-                                                             'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
+    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c', \
+        ['help', 'file_input_loc', 'file_output_loc', 'key_word', 'enable_count'])
     file_loc_input = ''
     file_loc_output = ''
     key_word = ''
@@ -147,6 +188,12 @@ def main():
     for op, value in opts:
         if op == "-i" or op == "--file_input_loc":
             file_loc_input = str(value)
+            if not path.isfile(file_loc_input):
+                print("File %s not exist!" % (file_loc_input))
+                sys.exit()
+            elif len(file_loc_input) < 5 or file_loc_input[-4:] != '.txt':
+                print("Input file supposed to be .txt format.")
+                sys.exit()
         elif op == "-o" or op == "--file_output_loc":
             file_loc_output = str(value)
         elif op == "-k" or op == "--key_word":
@@ -154,6 +201,10 @@ def main():
         elif op == "-c" or op == "--enable_count":
             enable_count = True
         elif op == "-h" or op == "--help":
+            usage()
+            sys.exit()
+        else:
+            print("Unknown args \"%s\"" % (op))
             usage()
             sys.exit()
 
@@ -165,7 +216,7 @@ def main():
 
     with open(file_loc_input, 'rt', encoding='utf-8') as chat_record:
         for line in chat_record:
-            if line[:4] != '2019' or (line[-2] != ')' and line[-2] != '>'):
+            if line[:2] != '20' or (line[-2] != ')' and line[-2] != '>'):
                 # not a new message
                 if member_talking != None:
                     member_talking.add_message(Time, line)
@@ -191,9 +242,9 @@ def main():
     if enable_count:
         for ID in members.keys():
             print('发消息%d%s条\t%s\t%s' %
-                  (members[ID].count, ' '*(len(str(count))-len(str(members[ID].count))), \
+                  (members[ID].count, ' '*(len(str(count))-len(str(members[ID].count))),
                       proportion_visualize(count, members[ID].count, max_count_message), members[ID].name))
-    
+
     if key_word != '':
         count_all = int(0)
         count_ID = {}
@@ -208,8 +259,9 @@ def main():
         for ID in count_ID.keys():
             if count_ID[ID] != 0:
                 print("发送\"%s\"次数%d%s\t%s\t%s" % (
-                    key_word, count_ID[ID], ' '*(len(str(max_count_word))-len(str(count_ID[ID]))),\
-                         proportion_visualize(count_all, count_ID[ID], max_count_word), members[ID].name))
+                    key_word, count_ID[ID], ' ' *
+                    (len(str(max_count_word))-len(str(count_ID[ID]))),
+                    proportion_visualize(count_all, count_ID[ID], max_count_word), members[ID].name))
         print('\n')
 
     if len(file_loc_output) > 0:
@@ -223,6 +275,37 @@ def main():
                         ' '+Time[3]+':'+Time[4]+':'+Time[5] + '\n'
                     file_dealed.write(Time)
                     file_dealed.write(line)
+    
+    '''
+    #_, who = next(iter(members.items()))
+    #Time, _ = next(traversing_dict(who.talks))
+    who = members['2589500860']
+    Time = [2019, 5, 14, 9, 28, 33]
+    #Time = [int(x) for x in Time.split('-')]
+    #print(Time)
+    units = ['year', 'month', 'day',\
+        'hour', 'minute', 'second']
+    length_time = 8000
+    unit = 'minute'
+    index_unit = units.index(unit)
+    vec_x = []
+    vec_y = []
+    for _ in range(length_time):
+        times, _ = who.get_talks(method='date', date=Time[:index_unit+1])
+        vec_y.append(times)
+        vec_x.append(str(Time[index_unit]))
+        Time = timer(Time, unit, 1)
+        #print(vec_y)
+    #print(vec_x)
+    Time_beg = [str(x) for x in timer(Time, unit, -length_time)[:index_unit+1]]
+    Time_end = [str(x) for x in Time[:index_unit+1]]
+    plt.plot(vec_y)
+    plt.grid()
+    plt.xlabel("time/%s" % (unit))
+    plt.title("%s发言数量[%s]-[%s]" %\
+         (who.name, '-'.join(Time_beg), '-'.join(Time_end)))
+    plt.show()
+    '''
 
 
 if __name__ == "__main__":

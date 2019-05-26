@@ -13,10 +13,11 @@ import getopt
 #plt.rcParams["font.sans-serif"] = ["SimHei"]
 #plt.rcParams["axes.unicode_minus"] = False
 SPECIAL = {"80000000":"匿名用户", "50000000":"系统提示"}
+WIDTH = int(60)
 
 class member(object):
-    def __init__(self, ID, name):
-        self.name = name if ID not in SPECIAL else SPECIAL[ID]
+    def __init__(self, ID):
+        self.name = ''
         self.id = ID
         self.count = 0
         '''
@@ -26,6 +27,12 @@ class member(object):
         self.talks = {}
 
     def add_message(self, Time, line):
+        this = time_dict(self.talks, Time)
+        this[1] += line
+
+    def new_message(self, name, Time):
+        self.name = name if self.id not in SPECIAL else SPECIAL[self.id]
+
         this = self.talks
         for t in Time[:-1]:
             if t in this:
@@ -36,18 +43,9 @@ class member(object):
         if Time[-1] not in this:
             this[Time[-1]] = [0, '']
 
-        this = self.talks[Time[0]][Time[1]][Time[2]
-                                            ][Time[3]][Time[4]][Time[5]]
-        this[0] += 1
-        this[1] += line
-
-    def new_message(self, name, Time):
-        self.name = name if self.id not in SPECIAL else SPECIAL[self.id]
         this = time_dict(self.talks, Time)
-        if this != None:
-            this[0] += 1
-        else:
-            return
+        this[0] += 1
+        self.count += 1
 
     def get_talks(self, date=[], key_word=''):
         # date = [year<int>, month<int>,...] prefix match
@@ -115,8 +113,8 @@ def get_info(line):
 
 
 def usage():
-    print(
-        "\nUsage:\n  search.exe -i <input file> [options] [...]\n")
+    print("\nVersion: 20190527\n")
+    print("Usage:\n  search.exe -i <input file> [options] [...]\n")
     print("General Options:")
     print("  -i, --input_loc <path>\tLocation of input file.")
     print("  -o, --output_loc <path>\tLocation of output file.")
@@ -130,10 +128,8 @@ def usage():
 
 def proportion_visualize(this, max_count):
 
-    width_this = int(this/max_count*50)
-    width_max = int(50)
-
-    return "%s%s" % ('.'*width_this, ' '*(width_max-width_this))
+    width_this = int(this/max_count*WIDTH)
+    return "%s%s" % ('·'*width_this, ' '*(WIDTH-width_this))
 
 def date_add_day(Time):
     # return Time + 1day
@@ -157,18 +153,21 @@ def date_add_day(Time):
 
 def print_analysis(members, key_word, time_beg, time_end, flag = False):
     # print messages under developing
-    max_count_word = int(0)
     count_ID = {}
     count_all = 0
+    #talks = ''
     for ID in members.keys():
         time_cur = time_beg
         count_ID[ID] = 0
         while(time_cur <= time_end):
             count_cur, _ = members[ID].get_talks(date=time_cur, key_word=key_word)
             count_ID[ID] += count_cur
+            #talks += line
             time_cur = date_add_day(time_cur)
-        max_count_word = max([max_count_word, count_ID[ID]])
-        count_all += count_ID[ID]
+        if count_ID[ID] == 0:
+            count_ID.pop(ID)
+        else:
+            count_all += count_ID[ID]
 
     ID_ordered = sorted(count_ID.keys(), key=lambda item:count_ID[item], reverse=True)
     
@@ -181,21 +180,31 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
         print("消息%d条\n" % (count_all))
     else:
         print("关键词\"%s\"%d次\n" % (key_word, count_all))
-    key_word = ("发送\"%s\"" % (key_word)) if key_word != '' else ("发送消息")
+    if len(count_ID) > 0 :
+        max_count = count_ID[ID_ordered[0]]
+    else:
+        return
+    
+    width_max = max(len(str(max_count)), 8)
+    print("发送次数%s|用户名" % (' '*(width_max-8)+'|'+' '*WIDTH))
+    print("%s" % ('-'*width_max+'|'+' '*WIDTH+'|'+'-'*10))
+
     for ID in ID_ordered:
-        if count_ID[ID] != 0:
-            print("%s次数%d%s  %s\t%s" % (
-                key_word, count_ID[ID], ' ' *
-                (len(str(max_count_word))-len(str(count_ID[ID]))),
-                proportion_visualize(count_ID[ID], max_count_word), members[ID].name))
+        print("%d%s|%s|%s" % (
+            count_ID[ID], ' ' *(width_max-len(str(count_ID[ID]))),
+            proportion_visualize(count_ID[ID], max_count), members[ID].name))
     print('\n')
 
-def print_all(members, max_count):
+def print_all(members):
     ID_ordered = sorted(members.keys(), key=lambda item:members[item].count, reverse=True)
+    max_count = members[ID_ordered[0]].count
+    width_max = max(len(str(max_count)), 8)
+    print("发送次数%s|用户名" % (' '*(width_max-8)+'|'+' '*WIDTH))
+    print("%s" % ('-'*width_max+'|'+' '*WIDTH+'|'+'-'*10))
     for ID in ID_ordered:
-            print("发消息次数%d%s  %s\t%s" %
-                  (members[ID].count, ' '*(len(str(max_count))-len(str(members[ID].count))),
-                      proportion_visualize(members[ID].count, max_count), members[ID].name))
+        print("%d%s|%s|%s" %
+              (members[ID].count, ' '*(width_max-len(str(members[ID].count))),
+                  proportion_visualize(members[ID].count, max_count), members[ID].name))
 
 def main():
     opts, _ = getopt.getopt(sys.argv[1:], "-h-i:-o:-k:-c",
@@ -233,9 +242,9 @@ def main():
     members = {}
     member_talking = None
     count = 0
-    max_count_message = int(0)
-    beg_time = [9999]  # only accurate to day
-    end_time = [0]
+    beg_time = []  # only accurate to day
+    end_time = []
+    Time = []
 
     # read and process input file
     with open(input_loc, "rt", encoding="utf-8") as chat_record:
@@ -250,23 +259,19 @@ def main():
                 # a new message
                 count += 1
                 ID, name, Time = get_info(line)
-                beg_time = Time[:3] if Time[:3] < beg_time else beg_time
-                end_time = Time[:3] if Time[:3] > end_time else end_time
-                if ID in members:
-                    # an old member
-                    members[ID].new_message(name, Time)
-                else:
+                if count == 1:
+                    beg_time = Time[:3]
+                if ID not in members:
                     # a new member
-                    members[ID] = member(ID, name)
-
-                #members[ID].add_message(Time)
-                members[ID].count += 1
-                max_count_message = max([max_count_message, members[ID].count])
+                    members[ID] = member(ID)
+                
+                members[ID].new_message(name, Time)
                 member_talking = members[ID]
+        end_time = Time[:3]
 
     print("\n%d-%d-%d:%d-%d-%d期间检索到" % (beg_time[0], beg_time[1], beg_time[2],\
             end_time[0], end_time[1], end_time[2]), end='')
-    print("消息记录%d条" % (count))
+    print("消息记录%d条\n" % (count))
 
 
     # write to output file
@@ -287,7 +292,7 @@ def main():
                     file_dealed.write(line[1])
 
     if count_enable:
-        print_all(members, max_count_message)
+        print_all(members)
 
     if key_word != '':
         print_analysis(members, key_word, beg_time, end_time)
@@ -319,26 +324,31 @@ def main():
             lower_bound = beg_time
             upper_bound = end_time
         if "-a" in modes:
-            print_all(members, max_count_message)
+            print_all(members)
         else:
             if "-k" in modes:
                 index_word = modes.index("-k") + 1
+                if len(modes) <= index_word:
+                    print(">\'-k\' option argument lost.\n")
+                    continue
                 key_word = modes[index_word]
                 del modes[index_word-1:index_word+1]
             if "-t" in modes:
-                Time = modes[modes.index("-t") + 1].split(':')
-                for i in range(len(Time)):
-                    if "begin" == Time[i]:
-                        Time[i] = beg_time
-                    elif "end" == Time[i]:
-                        Time[i] = end_time
-                    else:
-                        Time[i] = Time[i].split('-')
-                        Time[i] = [int(x) for x in Time[i]]
-                if len(Time) == 1:
-                    Time = Time*2
-                lower_bound = Time[0] if Time[0] > beg_time else beg_time
-                upper_bound = Time[1] if Time[1] < end_time else end_time
+                index_t = modes.index("-t") + 1
+                if len(modes) > index_t:
+                    Time = modes[modes.index("-t") + 1].split(':')
+                    for i in range(len(Time)):
+                        if "begin" == Time[i]:
+                            Time[i] = beg_time
+                        elif "end" == Time[i]:
+                            Time[i] = end_time
+                        else:
+                            Time[i] = Time[i].split('-')
+                            Time[i] = [int(x) for x in Time[i]]
+                    if len(Time) == 1:
+                        Time = Time*2
+                    lower_bound = Time[0] if Time[0] > beg_time else beg_time
+                    upper_bound = Time[1] if Time[1] < end_time else end_time
             if "-o" in modes:
                 flag_print = True
             print_analysis(members, key_word, lower_bound, upper_bound, flag_print)

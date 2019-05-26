@@ -171,8 +171,11 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
         max_count_word = max([max_count_word, count_ID[ID]])
         count_all += count_ID[ID]
 
-    print("\n%d-%d-%d:%d-%d-%d期间检索到" % (time_beg[0], time_beg[1], time_beg[2],\
-            time_end[0], time_end[1], time_end[2]), end='')
+    if time_beg == time_end:
+        print("\n%d-%d-%d期间检索到" % (time_beg[0], time_beg[1], time_beg[2]), end='')
+    else:
+        print("\n%d-%d-%d:%d-%d-%d期间检索到" % (time_beg[0], time_beg[1], time_beg[2],\
+                time_end[0], time_end[1], time_end[2]), end='')
     if key_word == '':
         print("消息%d条\n" % (count_all))
     else:

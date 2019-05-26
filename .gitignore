@@ -1,8 +1,6 @@
 /group
-/dist
-/__pycache__
-/build
+/packing
 
 *.txt
-search.spec
-test.*
+*.exe
+build.*

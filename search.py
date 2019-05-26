@@ -124,7 +124,8 @@ def usage():
     print("  -c, --count_enable\t\tEnable count of messages.")
     print("  -h, --help\t\t\tShow this info.\n")
     print("Notice: if there is only \'-i\' option, program would run on menu mode.")
-    print("        (which is more suggested and flexible.)\n-")
+    print("        (which is more suggested and flexible.)\n")
+    print("For more help, visit\nhttps://github.com/maxwellzh/QQ-chatting-record-search/blob/master/README.md\n")
 
 
 def proportion_visualize(this, max_count):
@@ -169,6 +170,8 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
         max_count_word = max([max_count_word, count_ID[ID]])
         count_all += count_ID[ID]
 
+    ID_ordered = sorted(count_ID.keys(), key=lambda item:count_ID[item], reverse=True)
+    
     if time_beg == time_end:
         print("\n%d-%d-%d期间检索到" % (time_beg[0], time_beg[1], time_beg[2]), end='')
     else:
@@ -179,7 +182,7 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
     else:
         print("关键词\"%s\"%d次\n" % (key_word, count_all))
     key_word = ("发送\"%s\"" % (key_word)) if key_word != '' else ("发送消息")
-    for ID in count_ID.keys():
+    for ID in ID_ordered:
         if count_ID[ID] != 0:
             print("%s次数%d%s  %s\t%s" % (
                 key_word, count_ID[ID], ' ' *
@@ -188,8 +191,9 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
     print('\n')
 
 def print_all(members, max_count):
-    for ID in members.keys():
-            print("发消息%d%s  次数\t%s\t%s" %
+    ID_ordered = sorted(members.keys(), key=lambda item:members[item].count, reverse=True)
+    for ID in ID_ordered:
+            print("发消息次数%d%s  %s\t%s" %
                   (members[ID].count, ' '*(len(str(max_count))-len(str(members[ID].count))),
                       proportion_visualize(members[ID].count, max_count), members[ID].name))
 

@@ -9,10 +9,10 @@
 目前仅支持`.txt`文本格式，使用方式
 
 ```
-$ python .\chat_cal.py -h
+$ .\search.exe -h
 
 Usage:
-  python chat_cal.py -i <input file> [options] [...]
+  search.exe -i <input file> [options] [...]
 
 General Options:
   -i, --input_loc <path>        Location of input file.
@@ -33,7 +33,7 @@ Notice: if there is only '-i' option, program would run on menu mode.
 菜单模式
 
 ```
-$ python chat_cal.py -i .\group\talk.txt
+$ .\search.exe -i .\group\talk.txt
 
 2019-5-14:2019-5-26期间检索到消息记录26392条
 Search modes support:
@@ -59,7 +59,7 @@ Notice: once detect '-a', all others args except 'exit' would be ignored.
 ##### 简单模式
 
 ```
-$python .\chat_cal.py -i .\talk.txt -k 日本
+$ .\search.exe -i .\talk.txt -k 日本
 
 2019-5-14:2019-5-26期间检索到消息记录26392条
 

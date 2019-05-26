@@ -7,13 +7,11 @@ message type:
 import sys
 import os.path as path
 import re
-import operator
 import getopt
-import datetime as dt
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-plt.rcParams["font.sans-serif"] = ["SimHei"]
-plt.rcParams["axes.unicode_minus"] = False
+#plt.rcParams["font.sans-serif"] = ["SimHei"]
+#plt.rcParams["axes.unicode_minus"] = False
 SPECIAL = {"80000000":"匿名用户", "50000000":"系统提示"}
 
 class member(object):
@@ -118,7 +116,7 @@ def get_info(line):
 
 def usage():
     print(
-        "\nUsage:\n  python chat_cal.py -i <input file> [options] [...]\n")
+        "\nUsage:\n  search.exe -i <input file> [options] [...]\n")
     print("General Options:")
     print("  -i, --input_loc <path>\tLocation of input file.")
     print("  -o, --output_loc <path>\tLocation of output file.")

@@ -217,13 +217,7 @@ def main():
 
     for op, value in opts:
         if op == "-i" or op == "--input_loc":
-            input_loc = str(value)
-            if not path.isfile(input_loc):
-                print("File %s not exist!" % (input_loc))
-                sys.exit()
-            elif len(input_loc) < 5 or input_loc[-4:] != ".txt":
-                print("Input file supposed to be .txt format.")
-                sys.exit()
+            input_loc = str(value)    
         elif op == "-o" or op == "--output_loc":
             output_loc = str(value)
         elif op == "-k" or op == "--key_word":
@@ -237,7 +231,9 @@ def main():
             print("Unknown args \"%s\"" % (op))
             usage()
             sys.exit()
-    
+    if len(opts) == 0:
+        usage()
+        sys.exit()
 
     members = {}
     member_talking = None
@@ -247,6 +243,12 @@ def main():
     Time = []
 
     # read and process input file
+    if not path.isfile(input_loc):
+        print("File %s not exist!" % (input_loc))
+        sys.exit()
+    elif len(input_loc) < 5 or input_loc[-4:] != ".txt":
+        print("Input file supposed to be .txt format.")
+        sys.exit()
     with open(input_loc, "rt", encoding="utf-8") as chat_record:
         for line in chat_record:
             if line[:2] != "20" or (line[-2] != ')' and line[-2] != '>'):

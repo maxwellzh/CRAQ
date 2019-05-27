@@ -2,7 +2,9 @@
 #-*- coding:utf-8 -*-
 '''
 message type:
-2019-xx-xx xx:xx:xx NAME(QQ_ID)
+xxxx-xx-xx xx:xx:xx 【title】NAME(ID)/【title】NAME<Email>
+xxxx-xx-xx xx:xx:xx NAME(ID)/NAME<Email>
+r'^\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*(\(\d+\)|<.*>)$'
 '''
 import sys
 import os.path as path
@@ -103,10 +105,14 @@ def get_info(line):
     Time = info[0].split('-')+info[1].split(':')
     Time = [int(s) for s in Time]
     #print(Time)
-    name = re.search(r".*(\(|<)", info[2]).group()[:-1]
-    ID = re.search(r"(\(|<)(.(?!(\(|<)))*(\)|>)$", info[2]).group()[1:-1]
-    if len(ID) == 0:
-        ID = re.search(r"<.*>", info[2]).group()[1:-1]
+    name = re.search(r".*(?=(\(|<))", info[2]).group()
+    # deal with title, could be used if needed
+    title = re.search(r'【.*】', name)
+    if title != None:
+        title = title.group()
+        name = name.lstrip(title)
+    
+    ID = re.search(r"(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)", info[2]).group()
 
     # Time = [year, month, day, hour, minute, second]
     return ID, name, Time
@@ -251,7 +257,8 @@ def main():
         sys.exit()
     with open(input_loc, "rt", encoding="utf-8") as chat_record:
         for line in chat_record:
-            if line[:2] != "20" or (line[-2] != ')' and line[-2] != '>'):
+            is_new = re.search(r'^\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*(\(\d+\)|<.*>)$', line) == None
+            if is_new:
                 # not a new message
                 if member_talking != None:
                     member_talking.add_message(Time, line)
@@ -279,12 +286,12 @@ def main():
     # write to output file
     if len(output_loc) > 0:
         with open(output_loc, "wt", encoding="utf-8") as file_dealed:
-            file_dealed.write("QQ ID/EMAIL%sQQ NAME\n" % (' '*4))
+            file_dealed.write("QQ ID/Email%sQQ NAME\n" % (' '*4))
             for ID in members.keys():
                 file_dealed.write("%s\t%s\n" % (ID, members[ID].name))
             file_dealed.write('\n')
             for ID in members.keys():
-                file_dealed.write("QQ ID/EMAIL: %s\n" % (ID))
+                file_dealed.write("QQ ID/Email: %s\n" % (ID))
                 file_dealed.write("QQ NAME: %s\n" % (members[ID].name))
                 for Time, line in traversing_dict(members[ID].talks):
                     Time = [str(x) for x in Time]

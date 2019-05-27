@@ -12,9 +12,9 @@ import re
 import getopt
 #import matplotlib.pyplot as plt
 
-#plt.rcParams["font.sans-serif"] = ["SimHei"]
-#plt.rcParams["axes.unicode_minus"] = False
-SPECIAL = {"80000000":"匿名用户", "50000000":"系统提示"}
+#plt.rcParams['font.sans-serif'] = ['SimHei']
+#plt.rcParams['axes.unicode_minus'] = False
+SPECIAL = {'80000000':'匿名用户', '50000000':'系统提示'}
 WIDTH = int(60)
 
 class member(object):
@@ -105,37 +105,37 @@ def get_info(line):
     Time = info[0].split('-')+info[1].split(':')
     Time = [int(s) for s in Time]
     #print(Time)
-    name = re.search(r".*(?=(\(|<))", info[2]).group()
+    name = re.search(r'.*(?=(\(|<))', info[2]).group()
     # deal with title, could be used if needed
     title = re.search(r'【.*】', name)
     if title != None:
         title = title.group()
         name = name.lstrip(title)
     
-    ID = re.search(r"(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)", info[2]).group()
+    ID = re.search(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)', info[2]).group()
 
     # Time = [year, month, day, hour, minute, second]
     return ID, name, Time
 
 
 def usage():
-    print("\nVersion: 20190527\n")
-    print("Usage:\n  search.exe -i <input file> [options] [...]\n")
-    print("General Options:")
-    print("  -i, --input_loc <path>\tLocation of input file.")
-    print("  -o, --output_loc <path>\tLocation of output file.")
-    print("  -k, --key_word <string>\tThe key word to search.")
-    print("  -c, --count_enable\t\tEnable count of messages.")
-    print("  -h, --help\t\t\tShow this info.\n")
-    print("Notice: if there is only \'-i\' option, program would run on menu mode.")
-    print("        (which is more suggested and flexible.)\n")
-    print("For more help, visit\nhttps://github.com/maxwellzh/QQ-chatting-record-search/blob/master/README.md\n")
+    print('\nVersion: 20190527\n')
+    print('Usage:\n  search.exe -i <input file> [options] [...]\n')
+    print('General Options:')
+    print('  -i, --input_loc <path>\tLocation of input file.')
+    print('  -o, --output_loc <path>\tLocation of output file.')
+    print('  -k, --key_word <string>\tThe key word to search.')
+    print('  -c, --count_enable\t\tEnable count of messages.')
+    print('  -h, --help\t\t\tShow this info.\n')
+    print('Notice: if there is only \'-i\' option, program would run on menu mode.')
+    print('        (which is more suggested and flexible.)\n')
+    print('For more help, visit\nhttps://github.com/maxwellzh/QQ-chatting-record-search/blob/master/README.md\n')
 
 
 def proportion_visualize(this, max_count):
 
     width_this = int(this/max_count*WIDTH)
-    return "%s%s" % ('·'*width_this, ' '*(WIDTH-width_this))
+    return '%s%s' % (' '*(WIDTH-width_this), '·'*width_this)
 
 def date_add_day(Time):
     # return Time + 1day
@@ -178,43 +178,39 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
     ID_ordered = sorted(count_ID.keys(), key=lambda item:count_ID[item], reverse=True)
     
     if time_beg == time_end:
-        print("\n%d-%d-%d期间检索到" % (time_beg[0], time_beg[1], time_beg[2]), end='')
+        print('\n%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2]), end='')
     else:
-        print("\n%d-%d-%d:%d-%d-%d期间检索到" % (time_beg[0], time_beg[1], time_beg[2],\
+        print('\n%d-%d-%d:%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2],\
                 time_end[0], time_end[1], time_end[2]), end='')
     if key_word == '':
-        print("消息%d条\n" % (count_all))
+        print('消息%d条\n' % (count_all))
     else:
-        print("关键词\"%s\"%d次\n" % (key_word, count_all))
+        print('关键词\'%s\'%d次\n' % (key_word, count_all))
     if len(count_ID) > 0 :
         max_count = count_ID[ID_ordered[0]]
     else:
         return
     
-    width_max = max(len(str(max_count)), 8)
-    print("发送次数%s|用户名" % (' '*(width_max-8)+'|'+' '*WIDTH))
-    print("%s" % ('-'*width_max+'|'+' '*WIDTH+'|'+'-'*10))
+    width_max = max(len(str(max_count)), 4)
+    print('|%s|次数%s|用户名' % ('-'*WIDTH, ' '*(width_max-4)))
 
     for ID in ID_ordered:
-        print("%d%s|%s|%s" % (
-            count_ID[ID], ' ' *(width_max-len(str(count_ID[ID]))),
-            proportion_visualize(count_ID[ID], max_count), members[ID].name))
+        print('|%s|%d%s|%s' % (proportion_visualize(count_ID[ID], max_count), 
+            count_ID[ID], ' ' *(width_max-len(str(count_ID[ID]))), members[ID].name))
     print('\n')
 
 def print_all(members):
     ID_ordered = sorted(members.keys(), key=lambda item:members[item].count, reverse=True)
     max_count = members[ID_ordered[0]].count
-    width_max = max(len(str(max_count)), 8)
-    print("发送次数%s|用户名" % (' '*(width_max-8)+'|'+' '*WIDTH))
-    print("%s" % ('-'*width_max+'|'+' '*WIDTH+'|'+'-'*10))
+    width_max = max(len(str(max_count)), 4)
+    print('|%s|次数%s|用户名' % ('-'*WIDTH, ' '*(width_max-4)))
     for ID in ID_ordered:
-        print("%d%s|%s|%s" %
-              (members[ID].count, ' '*(width_max-len(str(members[ID].count))),
-                  proportion_visualize(members[ID].count, max_count), members[ID].name))
+        print('|%s|%d%s|%s' % (proportion_visualize(members[ID].count, max_count),
+            members[ID].count, ' '*(width_max-len(str(members[ID].count))), members[ID].name))
 
 def main():
-    opts, _ = getopt.getopt(sys.argv[1:], "-h-i:-o:-k:-c",
-                            ["help", "input_loc", "output_loc", "key_word", "count_enable"])
+    opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c',
+                            ['help', 'input_loc', 'output_loc', 'key_word', 'count_enable'])
     input_loc = ''
     output_loc = ''
     key_word = ''
@@ -222,19 +218,19 @@ def main():
     flag_loop = len(sys.argv[1:]) == 2
 
     for op, value in opts:
-        if op == "-i" or op == "--input_loc":
+        if op == '-i' or op == '--input_loc':
             input_loc = str(value)    
-        elif op == "-o" or op == "--output_loc":
+        elif op == '-o' or op == '--output_loc':
             output_loc = str(value)
-        elif op == "-k" or op == "--key_word":
+        elif op == '-k' or op == '--key_word':
             key_word = str(value)
-        elif op == "-c" or op == "--count_enable":
+        elif op == '-c' or op == '--count_enable':
             count_enable = True
-        elif op == "-h" or op == "--help":
+        elif op == '-h' or op == '--help':
             usage()
             sys.exit()
         else:
-            print("Unknown args \"%s\"" % (op))
+            print('Unknown args \'%s\'' % (op))
             usage()
             sys.exit()
     if len(opts) == 0:
@@ -250,12 +246,12 @@ def main():
 
     # read and process input file
     if not path.isfile(input_loc):
-        print("File %s not exist!" % (input_loc))
+        print('File %s not exist!' % (input_loc))
         sys.exit()
-    elif len(input_loc) < 5 or input_loc[-4:] != ".txt":
-        print("Input file supposed to be .txt format.")
+    elif len(input_loc) < 5 or input_loc[-4:] != '.txt':
+        print('Input file supposed to be .txt format.')
         sys.exit()
-    with open(input_loc, "rt", encoding="utf-8") as chat_record:
+    with open(input_loc, 'rt', encoding='utf-8') as chat_record:
         for line in chat_record:
             is_new = re.search(r'^\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*(\(\d+\)|<.*>)$', line) == None
             if is_new:
@@ -278,21 +274,21 @@ def main():
                 member_talking = members[ID]
         end_time = Time[:3]
 
-    print("\n%d-%d-%d:%d-%d-%d期间检索到" % (beg_time[0], beg_time[1], beg_time[2],\
+    print('\n%d-%d-%d:%d-%d-%d期间检索到' % (beg_time[0], beg_time[1], beg_time[2],\
             end_time[0], end_time[1], end_time[2]), end='')
-    print("消息记录%d条\n" % (count))
+    print('消息记录%d条\n' % (count))
 
 
     # write to output file
     if len(output_loc) > 0:
-        with open(output_loc, "wt", encoding="utf-8") as file_dealed:
-            file_dealed.write("QQ ID/Email%sQQ NAME\n" % (' '*4))
+        with open(output_loc, 'wt', encoding='utf-8') as file_dealed:
+            file_dealed.write('QQ ID/Email%sQQ NAME\n' % (' '*4))
             for ID in members.keys():
-                file_dealed.write("%s\t%s\n" % (ID, members[ID].name))
+                file_dealed.write('%s\t%s\n' % (ID, members[ID].name))
             file_dealed.write('\n')
             for ID in members.keys():
-                file_dealed.write("QQ ID/Email: %s\n" % (ID))
-                file_dealed.write("QQ NAME: %s\n" % (members[ID].name))
+                file_dealed.write('QQ ID/Email: %s\n' % (ID))
+                file_dealed.write('QQ NAME: %s\n' % (members[ID].name))
                 for Time, line in traversing_dict(members[ID].talks):
                     Time = [str(x) for x in Time]
                     Time = Time[0]+'-'+Time[1]+'-'+Time[2] + \
@@ -308,48 +304,48 @@ def main():
 
     # loop menu
     while(flag_loop):
-        print("Search modes support:")
-        print("1. Search all chatting history.")
-        print("   usage: -a")
-        print("2. Search chatting history specify by a key word or time duration.")
-        print("   usage: -k <key word> -t <time> [<time end>]")
-        print("   example: -k beauty -t 2019-5-26")
-        print("            -k beauty -t 2019-5-16:end")
-        print("Exit: exit<Enter>\n")
-        print("Notice: once detect \'-a\', all others args except 'exit' would be ignored.")
-        print("        <time> foamat: <year>-<month>-<day>.")
+        print('Search modes support:')
+        print('1. Search all chatting history.')
+        print('   usage: -a')
+        print('2. Search chatting history specify by a key word or time duration.')
+        print('   usage: -k <key word> -t <time> [<time end>]')
+        print('   example: -k beauty -t 2019-5-26')
+        print('            -k beauty -t 2019-5-16:end')
+        print('Exit: exit<Enter>\n')
+        print('Notice: once detect \'-a\', all others args except \'exit\' would be ignored.')
+        print('        <time> foamat: <year>-<month>-<day>.')
         print(
-            "        you can add a \'-o\' arg to print messages to console in any mode.\n")
+            '        you can add a \'-o\' arg to print messages to console in any mode.\n')
 
         modes = ''
         flag_print = False
         while(modes == ''):
-            modes = str(input(">"))
+            modes = str(input('>'))
         modes = modes.split(' ')
-        if "exit" == modes[0]:
+        if 'exit' == modes[0]:
             sys.exit()
         else:
             key_word = ''
             lower_bound = beg_time
             upper_bound = end_time
-        if "-a" in modes:
+        if '-a' in modes:
             print_all(members)
         else:
-            if "-k" in modes:
-                index_word = modes.index("-k") + 1
+            if '-k' in modes:
+                index_word = modes.index('-k') + 1
                 if len(modes) <= index_word:
-                    print(">\'-k\' option argument lost.\n")
+                    print('>\'-k\' option argument lost.\n')
                     continue
                 key_word = modes[index_word]
                 del modes[index_word-1:index_word+1]
-            if "-t" in modes:
-                index_t = modes.index("-t") + 1
+            if '-t' in modes:
+                index_t = modes.index('-t') + 1
                 if len(modes) > index_t:
-                    Time = modes[modes.index("-t") + 1].split(':')
+                    Time = modes[modes.index('-t') + 1].split(':')
                     for i in range(len(Time)):
-                        if "begin" == Time[i]:
+                        if 'begin' == Time[i]:
                             Time[i] = beg_time
-                        elif "end" == Time[i]:
+                        elif 'end' == Time[i]:
                             Time[i] = end_time
                         else:
                             Time[i] = Time[i].split('-')
@@ -358,10 +354,10 @@ def main():
                         Time = Time*2
                     lower_bound = Time[0] if Time[0] > beg_time else beg_time
                     upper_bound = Time[1] if Time[1] < end_time else end_time
-            if "-o" in modes:
+            if '-o' in modes:
                 flag_print = True
             print_analysis(members, key_word, lower_bound, upper_bound, flag_print)
         input('Press Enter to continue')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

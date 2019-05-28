@@ -119,7 +119,7 @@ def get_info(line):
 
 
 def usage():
-    print('\nVersion: 20190527\n')
+    print('\nVersion: 20190529\n')
     print('Usage:\n  search.exe -i <input file> [options] [...]\n')
     print('General Options:')
     print('  -i, --input_loc <path>\tLocation of input file.')
@@ -129,7 +129,7 @@ def usage():
     print('  -h, --help\t\t\tShow this info.\n')
     print('Notice: if there is only \'-i\' option, program would run on menu mode.')
     print('        (which is more suggested and flexible.)\n')
-    print('For more help, visit\nhttps://github.com/maxwellzh/QQ-chatting-record-search/blob/master/README.md\n')
+    print('For more help, visit\nhttps://github.com/maxwellzh/CRAQ/blob/master/README.md\n')
 
 
 def proportion_visualize(this, max_count):

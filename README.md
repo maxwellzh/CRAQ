@@ -27,7 +27,7 @@ Notice: if there is only '-i' option, program would run on menu mode.
         (which is more suggested and flexible.)
 
 For more help, visit
-https://github.com/maxwellzh/QQ-chatting-record-search/blob/master/README.md
+https://github.com/maxwellzh/CRAQ/blob/master/README.md
 
 ```
 - `-i`指定输入文件位置，除打印帮助信息外为必须选项；只有该选项时会进入菜单模式

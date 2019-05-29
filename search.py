@@ -199,6 +199,31 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
             count_ID[ID], ' ' *(width_max-len(str(count_ID[ID]))), members[ID].name))
     print('\n')
 
+def print_timeline(members, key_word, time_beg, time_end):
+    count_date = {}
+    time_cur = time_beg
+    while(time_cur <= time_end):
+        date = ['%02d' % x for x in time_cur]
+        count_date['-'.join(date)] = 0
+        time_cur = date_add_day(time_cur)
+
+    for ID in members.keys():
+        for date in count_date.keys():
+            Time = [int(x) for x in date.split('-')]
+            count_cur, _ = members[ID].get_talks(date=Time, key_word=key_word)
+            count_date[date] += count_cur
+    
+    ID_ordered = sorted(count_date.keys(), key=lambda item:count_date[item], reverse=True)
+    max_count = count_date[ID_ordered[0]]
+
+    width_max = max(len(str(max_count)), 4)
+    print('|%s|   日期   |次数%s' % ('-'*WIDTH, ' '*(width_max-4)))
+
+    for date in count_date.keys():
+        print('|%s|%s|%d%s' % (proportion_visualize(count_date[date], max_count), date,
+            count_date[date], ' ' *(width_max-len(str(count_date[date])))))
+    print('\n')
+
 def print_all(members):
     ID_ordered = sorted(members.keys(), key=lambda item:members[item].count, reverse=True)
     max_count = members[ID_ordered[0]].count
@@ -322,6 +347,7 @@ def main():
         while(modes == ''):
             modes = str(input('>'))
         modes = modes.split(' ')
+        
         if 'exit' == modes[0]:
             sys.exit()
         else:
@@ -343,7 +369,7 @@ def main():
                 if len(modes) > index_t:
                     Time = modes[modes.index('-t') + 1].split(':')
                     for i in range(len(Time)):
-                        if 'begin' == Time[i]:
+                        if 'beg' == Time[i]:
                             Time[i] = beg_time
                         elif 'end' == Time[i]:
                             Time[i] = end_time
@@ -356,7 +382,10 @@ def main():
                     upper_bound = Time[1] if Time[1] < end_time else end_time
             if '-o' in modes:
                 flag_print = True
-            print_analysis(members, key_word, lower_bound, upper_bound, flag_print)
+            if '-m' in modes:
+                print_analysis(members, key_word, lower_bound, upper_bound, flag_print)
+            else:
+                print_timeline(members, key_word, lower_bound, upper_bound)
         input('Press Enter to continue')
 
 if __name__ == '__main__':

@@ -133,18 +133,20 @@ def usage():
 
 
 def proportion_visualize(this, max_count):
-
-    width_this = int(this/max_count*WIDTH)
-    return '%s%s' % (' '*(WIDTH-width_this), '·'*width_this)
+    if max_count == 0:
+        width_this = int(0)
+    else:
+        width_this = int(this/max_count*WIDTH)
+    return '%s%s' % (' '*(WIDTH-width_this), '#'*width_this)
 
 def date_add_day(Time):
     # return Time + 1day
     year, month, day = Time
-    projection = [31, 29, 31, 30, 31, 30,\
+    projection = [31, 28, 31, 30, 31, 30,\
                   31, 31, 30, 31, 30, 31]
     is_leap = (year % 4 == 0 and year % 100 != 0 or
                 year % 400 == 0)
-    projection[1] = 28 if is_leap else 29
+    projection[1] = 29 if is_leap else 28
     if projection[month-1] < day + 1:
         if month == 12:
             year += 1
@@ -213,8 +215,7 @@ def print_timeline(members, key_word, time_beg, time_end):
             count_cur, _ = members[ID].get_talks(date=Time, key_word=key_word)
             count_date[date] += count_cur
     
-    ID_ordered = sorted(count_date.keys(), key=lambda item:count_date[item], reverse=True)
-    max_count = count_date[ID_ordered[0]]
+    max_count = max(count_date.values())
 
     width_max = max(len(str(max_count)), 4)
     print('|%s|   日期   |次数%s' % ('-'*WIDTH, ' '*(width_max-4)))
@@ -236,6 +237,7 @@ def print_all(members):
 def main():
     opts, _ = getopt.getopt(sys.argv[1:], '-h-i:-o:-k:-c',
                             ['help', 'input_loc', 'output_loc', 'key_word', 'count_enable'])
+    #print(sys.argv[1:])
     input_loc = ''
     output_loc = ''
     key_word = ''
@@ -338,6 +340,7 @@ def main():
         print('            -k beauty -t 2019-5-16:end')
         print('Exit: exit<Enter>\n')
         print('Notice: once detect \'-a\', all others args except \'exit\' would be ignored.')
+        print('        default output is by timeline, use \'-m\' for by members.')
         print('        <time> foamat: <year>-<month>-<day>.')
         print(
             '        you can add a \'-o\' arg to print messages to console in any mode.\n')
@@ -347,7 +350,6 @@ def main():
         while(modes == ''):
             modes = str(input('>'))
         modes = modes.split(' ')
-        
         if 'exit' == modes[0]:
             sys.exit()
         else:
@@ -355,7 +357,10 @@ def main():
             lower_bound = beg_time
             upper_bound = end_time
         if '-a' in modes:
-            print_all(members)
+            if '-m' in modes:
+                print_all(members)
+            else:
+                print_timeline(members, '', lower_bound, upper_bound)
         else:
             if '-k' in modes:
                 index_word = modes.index('-k') + 1

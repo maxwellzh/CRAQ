@@ -1,6 +1,9 @@
 /group
 /packing
+/build
+/__pycache__
 
 *.txt
 *.exe
 build.*
+*.spec

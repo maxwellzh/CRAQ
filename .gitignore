@@ -7,3 +7,4 @@
 *.exe
 build.*
 *.spec
+build_date.py

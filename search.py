@@ -16,6 +16,7 @@ import getopt
 #plt.rcParams['axes.unicode_minus'] = False
 SPECIAL = {'80000000':'匿名用户', '50000000':'系统提示'}
 WIDTH = int(60)
+BUILD = '20190612'
 
 class member(object):
     def __init__(self, ID):
@@ -119,7 +120,7 @@ def get_info(line):
 
 
 def usage():
-    print('\nVersion: 20190529\n')
+    print('\nVersion: %s\n' % (BUILD))
     print('Usage:\n  search.exe -i <input file> [options] [...]\n')
     print('General Options:')
     print('  -i, --input_loc <path>\tLocation of input file.')

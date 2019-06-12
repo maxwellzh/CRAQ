@@ -4,29 +4,28 @@
 
 检索出某段时间内聊天记录内某关键词出现次数，及每个发言成员发言中出现该词次数.
 
-开发环境 Python `3.6.7`
+开发环境 Python `3.7.3`
 
 目前仅支持`.txt`文本格式，使用帮助
 
 ```
 $ .\search.exe -h
 
-Version: 20190612
+发布版本：20190612
+使用方式：
+    search.exe -i <input file> [options] [...]
 
-Usage:
-  search.exe -i <input file> [options] [...]
+可用选项：
+    -i, --input_loc <path>      指定输入文件位置，只添加-i参数时进入菜单模式（推荐）.
+    -o, --output_loc <path>     指定输出文件位置.
+    -k, --key_word <string>     指定关键词.
+    -c, --count_enable          消息统计.
+    -h, --help                  展示帮助信息（本信息）.
 
-General Options:
-  -i, --input_loc <path>        Location of input file.
-  -o, --output_loc <path>       Location of output file.
-  -k, --key_word <string>       The key word to search.
-  -c, --count_enable            Enable count of messages.
-  -h, --help                    Show this info.
+使用示例：
+    search.exe -i chatting.txt
 
-Notice: if there is only '-i' option, program would run on menu mode.
-        (which is more suggested and flexible.)
-
-For more help, visit
+获取更详细帮助信息，请访问项目：
 https://github.com/maxwellzh/CRAQ/blob/master/README.md
 
 ```
@@ -41,21 +40,17 @@ https://github.com/maxwellzh/CRAQ/blob/master/README.md
 
 ```
 $ .\search.exe -i .\group\talk.txt
+2019-5-14:2019-5-26期间检索到消息记录26697条
 
-2019-5-14:2019-5-26期间检索到消息记录26392条
-Search modes support:
-1. Search all chatting history.
-   usage: -a
-2. Search chatting history specify by a key word or time duration.
-   usage: -k <key word> -t <time> [<time end>]
-   example: -k beauty -t 2019-5-26
-            -k beauty -t 2019-5-16:end
-Exit: exit<Enter>
-
-Notice: once detect '-a', all others args except 'exit' would be ignored.
-        default output is by timeline, use '-m' for by members.
-        <time> foamat: <year>-<month>-<day>.
-        you can add a '-o' arg to print messages to console in any mode.
+检索方式：
+    [options] <argument> [...]
+可用选项：
+    -t <date begin>[:<date end>]    在所指定日期范围内搜索，时间格式：<年>-<月>-<日>
+                                    可用beg代表记录中开始时间，end代表记录结束时间.
+    -k <key word>                   指定关键词.
+    -a                              统计所有信息，会覆盖其他参数（-k -t）.
+    -m                              按照成员发言数输出（默认为按日期输出）.
+    exit                            退出（或ctrl+c）.
 
 >
 ```
@@ -71,8 +66,7 @@ $ .\search.exe -i .\talk.txt -k 日本
 
 2019-5-14:2019-5-26期间检索到消息记录26392条
 
-2019-5-14:2019-5-26期间检索到关键词"日本"232次
-
+|2019-5-14:2019-5-26期间检索到关键词'日本'232次
 |------------------------------------------------------------|次数|用户名
 |############################################################|48  |xxx
 |          ##################################################|40  |xxx
@@ -125,8 +119,7 @@ Press Enter to continue
 ```
 >-k 日本 -t 2019-5-14:end -m
 
-2019-5-14:2019-5-26期间检索到关键词'日本'232次
-
+|2019-5-14:2019-5-26期间检索到关键词'日本'232次
 |------------------------------------------------------------|次数|用户名
 |############################################################|48  |xxx
 |          ##################################################|40  |xxx
@@ -157,7 +150,7 @@ Press Enter to continue
 #### To do
 
 - [ ] 制作GUI
-- [ ] 完善统计后可将消息打印输出功能
+- [ ] 添加正则表达式搜索
 
 
 
@@ -166,7 +159,7 @@ Press Enter to continue
 如何导出QQ聊天记录：**QQ/Tim PC客户端**
 
 1. 打开任意聊天界面
-2. - **Tim：**输入文本框右上角点击“消息管理”，再选择”消息管理器“
+2. - **TIM：**输入文本框右上角点击“消息管理”，再选择”消息管理器“
    - **QQ：** 将鼠标指针移动至输入文本框右上角”···“处，选择”消息管理器“
 4. 列表内右击群组/个人，选择“导出消息聊天记录”
 5. 保存为`.txt`格式

@@ -1,9 +1,11 @@
 #-*- coding:utf-8 -*-
-from re import search
+import sys
+from re import search, compile
 
-SPECIAL = {'80000000':'匿名用户', '50000000':'系统提示'}
+SPECIAL = {'80000000': '匿名用户', '50000000': '系统提示'}
 WIDTH = int(60)
-BUILD = '20190612'
+BUILD = '20190615'
+
 
 class member(object):
     def __init__(self, ID):
@@ -37,7 +39,7 @@ class member(object):
         this[0] += 1
         self.count += 1
 
-    def get_talks(self, date=[], key_word=''):
+    def get_talks(self, date=[], key_word='', regular=False):
         # date = [year<int>, month<int>,...] prefix match
         # return count<int>, message<string>
         times = 0
@@ -52,11 +54,24 @@ class member(object):
                     times += message[0]
                 return times, talks
             else:
-                for _, message in traversing_dict(this):
-                    if key_word in message[1]:
-                        talks += message[1]
-                    times += message[1].count(key_word)
+                if regular:
+                    regular = compile(r'%s' % key_word)
+                    for Time, message in traversing_dict(this):
+                        Time = date + Time
+                        result = regular.search(message[1])
+                        if result != None:
+                            Time = '%d-%02d-%02d %02d:%02d:%02d\n' % \
+                                (Time[0], Time[1], Time[2],
+                                 Time[3], Time[4], Time[5])
+                            talks += Time + message[1]
+                            times += len(result.group())
+                else:
+                    for _, message in traversing_dict(this):
+                        if key_word in message[1]:
+                            talks += message[1]
+                        times += message[1].count(key_word)
                 return times, talks
+
 
 def traversing_dict(Dict):
     # yield date, pointer
@@ -69,6 +84,7 @@ def traversing_dict(Dict):
         else:
             for key_x, x in traversing_dict(value):
                 yield [key] + key_x, x
+
 
 def time_dict(talks, Time):
     # return pointer specified by Time
@@ -99,8 +115,9 @@ def get_info(line):
     if title != None:
         title = title.group()
         name = name.lstrip(title)
-    
-    ID = search(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)', info[2]).group()
+
+    ID = search(
+        r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)', info[2]).group()
 
     # Time = [year, month, day, hour, minute, second]
     return ID, name, Time
@@ -123,14 +140,16 @@ def usage():
     print('\n发布版本：%s' % (BUILD))
     print('使用方式：\n    search.exe -i <input file> [options] [...]\n')
     print('可用选项：')
-    print('    -i, --input_loc <path>\t指定输入文件位置，只添加-i参数时进入菜单模式（推荐）.')
-    print('    -o, --output_loc <path>\t指定输出文件位置.')
-    print('    -k, --key_word <string>\t指定关键词.')
-    print('    -c, --count_enable\t\t消息统计.')
-    print('    -h, --help\t\t\t展示帮助信息（本信息）.\n')
+    print('    -i, --infile <path>             指定输入文件位置，只添加-i参数时进入菜单模式（推荐）.')
+    print('    -o, --outfile <path>            指定输出文件位置.')
+    print('    -k, --kwd <key word>            指定关键词，不与-r同时使用.')
+    print('    -r, --regular <pattern>         使用正则表达式搜索，不与-k同时使用.')
+    print('    -c, --count                     消息统计.')
+    print('    -h, --help                      展示帮助信息（本信息）.\n')
     print('使用示例：')
     print('    search.exe -i chatting.txt\n')
-    print('获取更详细帮助信息，请访问项目：\nhttps://github.com/maxwellzh/CRAQ/blob/master/README.md\n')
+    print('获取更详细帮助信息，请访问项目：\nhttps://github.com/maxwellzh/CRAQ/blob/master/README.md')
+
 
 def menu_usage():
     '''
@@ -151,12 +170,15 @@ def menu_usage():
 检索方式：\n\
     [options] <argument> [...]\n\
 可用选项：\n\
-    -t <date begin>[:<date end>]    在所指定日期范围内搜索，时间格式：<年>-<月>-<日>\n\
-                                    可用beg代表记录中开始时间，end代表记录结束时间.\n\
-    -k <key word>                   指定关键词.\n\
-    -a                              统计所有信息，会覆盖其他参数（-k -t）.\n\
-    -m                              按照成员发言数输出（默认为按日期输出）.\n\
-    exit                            退出（或ctrl+c）.\n')
+    -t, --time                      在所指定日期范围内搜索，时间格式示例：190611\n\
+        <date begin>[:<date end>]   可用beg代表记录中开始时间，end代表记录结束时间.\n\
+    -k, --kwd <key word>            指定关键词，不可与-r共同使用.\n\
+    -a, --all                       统计所有信息，会覆盖其他参数（-k -t）.\n\
+    -m, --member                    按照成员发言数输出（默认为按日期输出）.\n\
+    -r, --regular <pattern>         使用正则表达式搜索，不可与-k共同使用.\n\
+    -d, --detail                    使用正则表达式时添加可输出详细信息.\n\
+    -e, --exit                      退出（或ctrl+c）.\n')
+
 
 def proportion_visualize(this, max_count):
     if max_count == 0:
@@ -165,27 +187,45 @@ def proportion_visualize(this, max_count):
         width_this = int(this/max_count*WIDTH)
     return '%s%s' % (' '*(WIDTH-width_this), '#'*width_this)
 
-def date_add_day(Time):
-    # return Time + 1day
+
+def date_add(Time, days=1):
+    # return Time + days(could be any integer)
+    if days == 0:
+        return Time
     year, month, day = Time
-    projection = [31, 28, 31, 30, 31, 30,\
+    projection = [31, 28, 31, 30, 31, 30,
                   31, 31, 30, 31, 30, 31]
     is_leap = (year % 4 == 0 and year % 100 != 0 or
-                year % 400 == 0)
+               year % 400 == 0)
     projection[1] = 29 if is_leap else 28
-    if projection[month-1] < day + 1:
-        if month == 12:
-            year += 1
-            month = 1
-            day = 1
-        else:
-            month += 1
-            day = 1
-    else:
-        day += 1
-    return [year, month, day]
 
-def print_analysis(members, key_word, time_beg, time_end, flag = False):
+    if days > 0:
+        if projection[month-1] < day + 1:
+            if month == 12:
+                year += 1
+                month = 1
+                day = 1
+            else:
+                month += 1
+                day = 1
+        else:
+            day += 1
+        return date_add([year, month, day], days-1)
+    else:
+        if day - 1 == 0:
+            if month == 1:
+                year -= 1
+                month = 12
+                day = 31
+            else:
+                month -= 1
+                day = projection[month-1]
+        else:
+            day -= 1
+        return date_add([year, month, day], days+1)
+
+
+def by_members(members, key_word, time_beg, time_end):
     # print messages under developing
     count_ID = {}
     count_all = 0
@@ -194,55 +234,58 @@ def print_analysis(members, key_word, time_beg, time_end, flag = False):
         time_cur = time_beg
         count_ID[ID] = 0
         while(time_cur <= time_end):
-            count_cur, _ = members[ID].get_talks(date=time_cur, key_word=key_word)
+            count_cur, _ = members[ID].get_talks(
+                date=time_cur, key_word=key_word)
             count_ID[ID] += count_cur
             #talks += line
-            time_cur = date_add_day(time_cur)
+            time_cur = date_add(time_cur)
         if count_ID[ID] == 0:
             count_ID.pop(ID)
         else:
             count_all += count_ID[ID]
 
-    ID_ordered = sorted(count_ID.keys(), key=lambda item:count_ID[item], reverse=True)
-    
+    ID_ordered = sorted(
+        count_ID.keys(), key=lambda item: count_ID[item], reverse=True)
+
     out_str = ''
     if time_beg == time_end:
         out_str += '%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2])
     else:
-        out_str += '%d-%d-%d:%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2],\
-                time_end[0], time_end[1], time_end[2])
+        out_str += '%d-%d-%d:%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2],
+                                               time_end[0], time_end[1], time_end[2])
     if key_word == '':
         out_str += '总消息%d条' % (count_all)
     else:
         out_str += '关键词\'%s\'%d次' % (key_word, count_all)
 
-    if len(count_ID) > 0 :
+    if len(count_ID) > 0:
         max_count = count_ID[ID_ordered[0]]
     else:
         return
     print('|%s' % (out_str))
-    
+
     width_max = max(len(str(max_count)), 4)
     print('|%s|次数%s|用户名' % ('-'*WIDTH, ' '*(width_max-4)))
 
     for ID in ID_ordered:
-        print('|%s|%d%s|%s' % (proportion_visualize(count_ID[ID], max_count), 
-            count_ID[ID], ' ' *(width_max-len(str(count_ID[ID]))), members[ID].name))
+        print('|%s|%d%s|%s' % (proportion_visualize(count_ID[ID], max_count),
+                               count_ID[ID], ' ' * (width_max-len(str(count_ID[ID]))), members[ID].name))
 
-def print_timeline(members, key_word, time_beg, time_end):
+
+def by_timeline(members, key_word, time_beg, time_end):
     count_date = {}
     time_cur = time_beg
     while(time_cur <= time_end):
         date = ['%02d' % x for x in time_cur]
         count_date['-'.join(date)] = 0
-        time_cur = date_add_day(time_cur)
+        time_cur = date_add(time_cur)
 
     for ID in members.keys():
         for date in count_date.keys():
             Time = [int(x) for x in date.split('-')]
             count_cur, _ = members[ID].get_talks(date=Time, key_word=key_word)
             count_date[date] += count_cur
-    
+
     max_count = max(count_date.values())
 
     width_max = max(len(str(max_count)), 4)
@@ -250,17 +293,20 @@ def print_timeline(members, key_word, time_beg, time_end):
 
     for date in count_date.keys():
         print('|%s|%s|%d%s' % (proportion_visualize(count_date[date], max_count), date,
-            count_date[date], ' ' *(width_max-len(str(count_date[date])))))
+                               count_date[date], ' ' * (width_max-len(str(count_date[date])))))
+
 
 def print_all(members):
-    ID_ordered = sorted(members.keys(), key=lambda item:members[item].count, reverse=True)
+    ID_ordered = sorted(
+        members.keys(), key=lambda item: members[item].count, reverse=True)
     max_count = members[ID_ordered[0]].count
     width_max = max(len(str(max_count)), 4)
 
     print('|%s|次数%s|用户名' % ('-'*WIDTH, ' '*(width_max-4)))
     for ID in ID_ordered:
         print('|%s|%d%s|%s' % (proportion_visualize(members[ID].count, max_count),
-            members[ID].count, ' '*(width_max-len(str(members[ID].count))), members[ID].name))
+                               members[ID].count, ' '*(width_max-len(str(members[ID].count))), members[ID].name))
+
 
 def get_lines(file_name):
     count = 0
@@ -271,3 +317,22 @@ def get_lines(file_name):
                 break
             count += buffer.count('\n'.encode())
     return int(count)
+
+
+def by_regular(members, regular, time_beg, time_end, if_print=False):
+    for ID in members.keys():
+        time_cur = time_beg
+        count = 0
+        out_line = ''
+        while(time_cur <= time_end):
+            count_this, line = members[ID].get_talks(
+                time_cur, regular, regular=True)
+            count += count_this
+            out_line += line
+            time_cur = date_add(time_cur)
+        if count > 0:
+            print('%s' % '='*50)
+            print('%s<%s>[%d]' % (members[ID].name, ID, count))
+            if if_print:
+                print('%s' % '='*50)
+                print(out_line)

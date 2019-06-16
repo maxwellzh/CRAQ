@@ -57,52 +57,63 @@ def main():
         sys.exit()
 
     members = {}
-    member_talking = None
+    last_talking = None
     count = []
     time_beg = [9999]  # only accurate to day
     time_end = []
     Time = []
 
     # read and process input file
+    is_new = re.compile(r'^\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*(\(\d+\)|<.*>)$')
     for file in infile:
         if not path.isfile(file):
             modules.error(4)
         elif len(file) < 5 or file[-4:] != '.txt':
             modules.error(5)
-        
-        count.append(0)
+
         total_lines = modules.get_lines(file)
         out_interval = int(total_lines/100)
 
         with open(file, 'rt', encoding='utf-8') as fin:
             line_cur = int(0)
+            out_line = ''
             for line in fin:
-                is_new = re.search(
-                    r'^\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*(\(\d+\)|<.*>)$', line) == None
-                if is_new:
+                line_cur += 1
+                if is_new.search(line) == None:
+                    continue
+                else:
+                    count.append(1)
+                    ID, name, Time = modules.get_info(line)
+                    if Time[:3] < time_beg:
+                        time_beg = Time[:3]
+                    if ID not in members:
+                        members[ID] = member(ID)
+                    last_talking = members[ID].new_message(name, Time)
+                    break
+            for line in fin:
+                line_cur += 1
+                if is_new.search(line) == None:
                     # not a new message
-                    if member_talking != None:
-                        member_talking.add_message(Time, line)
-                    else:   # irrelevant lines at the beginning
-                        continue
+                    out_line += line
+                    continue
                 else:
                     # a new message
                     count[-1] += 1
+                    last_talking[1] += out_line
+
                     ID, name, Time = modules.get_info(line)
-                    if count[-1] == 1:
-                        if Time[:3] < time_beg:
-                            time_beg = Time[:3]
                     if ID not in members:
                         # a new member
                         members[ID] = member(ID)
+                    last_talking = members[ID].new_message(name, Time)
+                    out_line = ''
 
-                    members[ID].new_message(name, Time)
-                    member_talking = members[ID]
-                line_cur += 1
+                # not accurate
                 if line_cur % out_interval == 0:
                     prop = line_cur/total_lines
                     print('\rReading %s: %.0f%%|%s%s|' % (file, prop*100,
                     '#'*int(80*prop), '-'*int(80*(1-prop))), end='')
+            last_talking[1] += out_line
         if Time[:3] > time_end:
             time_end = Time[:3]
     print('\r%s' % (' '*200), end='')

@@ -7,6 +7,10 @@ SPECIAL = {'80000000': '匿名用户', '50000000': '系统提示'}
 WIDTH = int(60)
 BUILD = '20190616'
 
+id_re = re.compile(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)')
+name_re = re.compile(r'.*(?=(\(|<))')
+title_re = re.compile(r'【.*】')
+
 class member(object):
     def __init__(self, ID):
         self.name = ''
@@ -18,9 +22,9 @@ class member(object):
         '''
         self.talks = {}
 
-    def add_message(self, Time, line):
-        this = time_dict(self.talks, Time)
-        this[1] += line
+    #def add_message(self, Time, line):
+    #    this = time_dict(self.talks, Time)
+    #    this[1] += line
 
     def new_message(self, name, Time):
         self.name = name if self.id not in SPECIAL else SPECIAL[self.id]
@@ -35,9 +39,10 @@ class member(object):
         if Time[-1] not in this:
             this[Time[-1]] = [0, '']
 
-        this = time_dict(self.talks, Time)
+        this = this[Time[-1]]
         this[0] += 1
         self.count += 1
+        return this
 
     def get_talks(self, date=[], key_word='', regular=False):
         # date = [year<int>, month<int>,...] prefix match
@@ -59,7 +64,7 @@ class member(object):
                 return times, talks
             else:
                 if regular:
-                    regular = re.compile(r'%s' % key_word)
+                    regular = re.compile(r'%s' % key_word, flags=re.MULTILINE)
                     for Time, message in traversing_dict(this):
                         Time = date + Time
                         result = regular.findall(message[1])
@@ -116,15 +121,14 @@ def get_info(line):
         info = info[:2] + [' '.join(info[2:])]
     Time = info[0].split('-')+info[1].split(':')
     Time = [int(s) for s in Time]
-    name = re.search(r'.*(?=(\(|<))', info[2]).group()
+    name = name_re.search(info[2]).group()
     # deal with title, could be used if needed
-    title = re.search(r'【.*】', name)
+    title = title_re.search(name)
     if title != None:
         title = title.group()
         name = name.lstrip(title)
 
-    ID = re.search(
-        r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)', info[2]).group()
+    ID = id_re.search(info[2]).group()
 
     # Time = [year, month, day, hour, minute, second]
     return ID, name, Time

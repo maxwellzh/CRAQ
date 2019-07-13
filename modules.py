@@ -5,7 +5,7 @@ from getopt import getopt
 
 SPECIAL = {'80000000': '匿名用户', '50000000': '系统提示'}
 WIDTH = int(60)
-BUILD = '20190616'
+BUILD = '20190705'
 
 id_re = re.compile(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)')
 name_re = re.compile(r'.*(?=(\(|<))')
@@ -366,7 +366,8 @@ def menu(members, time_beg, time_end):
     modes = ''
     while(modes == ''):
         modes = str(input('>'))
-    modes = modes.split(' ')
+    modes = re.findall(r'(?<=").*(?=")|(?!"|\s)\S*', modes)
+    modes = modes[:-1]
     short_opts_menu = ['-t:', '-k:', '-a', '-m', '-e', '-r:', '-d', '-n:']
     long_opts_menu = ['time', 'kwd', 'all', 'member', 'exit', 'regular', 'detail', 'name']
     long_opts_menu = ['--'+x for x in long_opts_menu]

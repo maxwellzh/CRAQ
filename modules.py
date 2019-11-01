@@ -5,7 +5,7 @@ from getopt import getopt
 
 SPECIAL = {'80000000': '匿名用户', '50000000': '系统提示'}
 WIDTH = int(60)
-BUILD = '20190705'
+BUILD = '20190713'
 
 id_re = re.compile(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)')
 name_re = re.compile(r'.*(?=(\(|<))')

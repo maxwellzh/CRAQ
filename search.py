@@ -12,7 +12,6 @@ import datetime
 import modules
 import sys
 import re
-import time
 
 Member = modules.Member
 VERSION = str(datetime.date.today()).replace('-', '')
@@ -58,7 +57,6 @@ def main():
     Time = []
 
     # read and process input file
-    t_beg = time.process_time()
     is_new = re.compile(r'\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*\n')
     for f in infile:
         with f as file:
@@ -81,10 +79,9 @@ def main():
                 time_end = Time[:3]
 
             count+=len(info)
-    t_end = time.process_time()
     print('%d-%d-%d:%d-%d-%d期间检索到消息记录%d条' % (time_beg[0], time_beg[1], time_beg[2],
                                         time_end[0], time_end[1], time_end[2], count))
-    print("time=%f" % (t_end - t_beg))
+
     if outfile != None:
         modules.out(members, outfile)
     if count_enable:

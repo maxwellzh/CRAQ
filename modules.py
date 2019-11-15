@@ -382,7 +382,7 @@ def out(members, outfile):
 def menu(members, time_beg, time_end):
     modes = ''
     while(modes == ''):
-        modes = str(input('>'))
+        modes = str(input('> '))
     modes = re.findall(r'(?<=").*(?=")|(?!"|\s)\S*', modes)
     modes = modes[:-1]
     short_opts_menu = ['-t:', '-k:', '-a', '-m', '-e', '-r:', '-d', '-n:']

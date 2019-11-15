@@ -19,9 +19,9 @@ parser = argparse.ArgumentParser(description=("QQ消息文本搜索[%s]" % VERSI
     epilog="获取更详细帮助信息：https://github.com/maxwellzh/CRAQ/blob/master/README.md")
 parser._actions[0].help="显示当前信息."
 parser.add_argument("-i", help="指定输入文件，只添加-i参数时进入菜单模式（推荐）.", 
-    metavar="in-file", type=argparse.FileType('rt'), nargs='+', dest="infile")
+    metavar="in-file", type=argparse.FileType('rt', encoding='utf-8'), nargs='+', dest="infile")
 parser.add_argument("-o", help="指定输出文件.", metavar="out-file", 
-    type=argparse.FileType('wt'), dest="outfile")
+    type=argparse.FileType('wt', encoding='utf-8'), dest="outfile")
 search_group = parser.add_mutually_exclusive_group()
 search_group.add_argument("-k", help="指定关键词，不与-r同时使用.",
     action="store", dest="keyword")
@@ -38,11 +38,11 @@ def main():
     # No argument error
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
-        exit(-1)
+        sys.exit(-1)
     # Not specify input file but ask for behavior like "-k, -r..."
     if args.infile==None:
         print("未指定输入文件.")
-        exit(-1)
+        sys.exit(-1)
 
     infile = args.infile
     outfile = args.outfile

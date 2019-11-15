@@ -241,6 +241,8 @@ xxx<123456789>[1]
 
 not support
 
+## Use a new method to read file
 
-new method: time=13.860681
-old method: 
+Testbench: read ~500w lines of text
+new method: time=13.860681s
+old method: time=16.610630s

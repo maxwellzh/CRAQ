@@ -12,8 +12,9 @@ import datetime
 import modules
 import sys
 import re
+import time
 
-member = modules.member
+Member = modules.Member
 VERSION = str(datetime.date.today()).replace('-', '')
 parser = argparse.ArgumentParser(description=("QQ消息文本搜索[%s]" % VERSION), 
     epilog="获取更详细帮助信息：https://github.com/maxwellzh/CRAQ/blob/master/README.md")
@@ -51,70 +52,39 @@ def main():
     count_enable = args.count
 
     members = {}
-    last_msg = None
-    count = []
+    count = 0
     time_beg = [9999]  # only accurate to day
     time_end = []
     Time = []
 
     # read and process input file
-    is_new = re.compile(r'^\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*(\(\d+\)|<.*>)$')
+    t_beg = time.process_time()
+    is_new = re.compile(r'\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*\n')
     for f in infile:
         with f as file:
-            total_lines = modules.get_lines(file)
-            out_interval = int(total_lines/100)
+            data = file.read()
+            #print(data[:300])
+            info = is_new.findall(data)
+            msg = is_new.split(data)
+            for i in range(len(info)):
+                ID, name, Time = modules.get_info(info[i])
+                if ID not in members:
+                    # a new member
+                    members[ID] = Member(ID)
+                members[ID].new_message(name, Time, msg[i+1])
+            #print(info==None)
+            _, _, Time = modules.get_info(info[0])
+            if Time[:3] < time_beg:
+                time_beg = Time[:3]
+            _, _, Time = modules.get_info(info[-1])
+            if Time[:3] > time_end:
+                time_end = Time[:3]
 
-            line_cur = int(0)
-            out_line = ''
-
-            # First deal with useless head lines
-            for line in file:
-                line_cur += 1
-                if is_new.search(line) == None:
-                    continue
-                else:
-                    count.append(1)
-                    ID, name, Time = modules.get_info(line)
-                    if Time[:3] < time_beg:
-                        time_beg = Time[:3]
-                    if ID not in members:
-                        members[ID] = member(ID)
-                    last_msg = members[ID].new_message(name, Time)
-                    break
-
-            # Deal with main text
-            for line in file:
-                line_cur += 1
-                if is_new.search(line) == None:
-                    # not a new message
-                    out_line += line
-                    continue
-                else:
-                    # a new message
-                    count[-1] += 1
-                    last_msg[1] += out_line
-
-                    ID, name, Time = modules.get_info(line)
-                    if ID not in members:
-                        # a new member
-                        members[ID] = member(ID)
-                    last_msg = members[ID].new_message(name, Time)
-                    out_line = ''
-
-                # not accurate
-                if line_cur % out_interval == 0:
-                    prop = line_cur/total_lines
-                    print('\rReading: %.0f%%|%s%s|' % (prop*100,
-                    '#'*int(80*prop), '-'*int(80*(1-prop))), end='')
-            last_msg[1] += out_line
-        if Time[:3] > time_end:
-            time_end = Time[:3]
-    print('\r%s' % (' '*200), end='')
-    print('\r%d-%d-%d:%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2],
-                                        time_end[0], time_end[1], time_end[2]), end='')
-    print('消息记录%d条\n' % (sum(count)))
-
-
+            count+=len(info)
+    t_end = time.process_time()
+    print('%d-%d-%d:%d-%d-%d期间检索到消息记录%d条' % (time_beg[0], time_beg[1], time_beg[2],
+                                        time_end[0], time_end[1], time_end[2], count))
+    print("time=%f" % (t_end - t_beg))
     if outfile != None:
         modules.out(members, outfile)
     if count_enable:

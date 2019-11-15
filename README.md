@@ -240,3 +240,7 @@ xxx<123456789>[1]
 ### MacOS/Linux/Mobile OS
 
 not support
+
+
+new method: time=13.860681
+old method: 

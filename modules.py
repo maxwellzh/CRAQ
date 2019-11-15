@@ -11,7 +11,7 @@ id_re = re.compile(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)')
 name_re = re.compile(r'.*(?=(\(|<))')
 title_re = re.compile(r'【.*】')
 
-class member(object):
+class Member(object):
     def __init__(self, ID):
         self.name = ''
         self.id = ID
@@ -26,7 +26,7 @@ class member(object):
     #    this = time_dict(self.talks, Time)
     #    this[1] += line
 
-    def new_message(self, name, Time):
+    def new_message(self, name, Time, Msg):
         self.name = name if self.id not in SPECIAL else SPECIAL[self.id]
 
         this = self.talks
@@ -37,12 +37,17 @@ class member(object):
                 this[t] = {}
             this = this[t]
         if Time[-1] not in this:
-            this[Time[-1]] = [0, '']
-
-        this = this[Time[-1]]
-        this[0] += 1
-        self.count += 1
-        return this
+            this[Time[-1]] = [1, Msg]
+            self.count += 1
+            return
+        else:
+            if Msg == this[Time[-1]][1]:
+                return
+            else:
+                this[Time[-1]][0] += 1
+                this[Time[-1]][1] += Msg
+                self.count += 1
+                return
 
     def get_talks(self, date=[], key_word='', regular=False):
         # date = [year<int>, month<int>,...] prefix match

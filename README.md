@@ -244,5 +244,7 @@ not support
 ## Use a new method to read file
 
 Testbench: read ~500w lines of text
+
 new method: time=13.860681s
+
 old method: time=16.610630s

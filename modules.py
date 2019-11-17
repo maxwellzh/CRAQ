@@ -21,14 +21,16 @@ class Member(object):
             second:[times<int>, message<string>]}}}}}}
         '''
         self.talks = {}
+        self.lastupdate = []
 
     #def add_message(self, Time, line):
     #    this = time_dict(self.talks, Time)
     #    this[1] += line
 
     def new_message(self, name, Time, Msg):
-        self.name = name if self.id not in SPECIAL else SPECIAL[self.id]
-
+        if Time > self.lastupdate:
+            self.name = name if self.id not in SPECIAL else SPECIAL[self.id]
+            
         this = self.talks
         for t in Time[:-1]:
             if t in this:

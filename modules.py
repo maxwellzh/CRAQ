@@ -30,7 +30,7 @@ class Member(object):
     def new_message(self, name, Time, Msg):
         if Time > self.lastupdate:
             self.name = name if self.id not in SPECIAL else SPECIAL[self.id]
-            
+            self.lastupdate = Time
         this = self.talks
         for t in Time[:-1]:
             if t in this:

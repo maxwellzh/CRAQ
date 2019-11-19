@@ -10,16 +10,16 @@
 
 ```shell
 $ .\search.exe -h
-usage: search.py [-h] [-i in-file [in-file ...]] [-o out-file]
-                 [-k KEYWORD | -r REGULAR | -c] [-v]
+usage: search.py [-h] [-i in-file [in-file ...]] [-o out-file] [-m out-file] [-k KEYWORD | -r REGULAR | -c] [-v]
 
-QQ消息文本搜索[20191116]
+QQ消息文本搜索[20191119]
 
 optional arguments:
   -h, --help            显示当前信息.
   -i in-file [in-file ...]
                         指定输入文件，只添加-i参数时进入菜单模式（推荐）.
   -o out-file           指定输出文件.
+  -m out-file           整合消息记录.
   -k KEYWORD            指定关键词，不与-r同时使用.
   -r REGULAR            使用正则表达式搜索，不与-k同时使用.
   -c, --count           消息统计.
@@ -36,6 +36,8 @@ optional arguments:
   ```
 
 - `-o`指定输出文件位置，将处理后文本信息输出到指定文件中，若文件不存在则会新建，**文件已存在会覆盖！**
+
+- `-m`可将输入文件整合（按时间顺序）为一个文件，若文件不存在则会新建，**文件已存在会覆盖！**
 
 - `-k`关键词检索， 若搜索内容包含特殊字符（例如`@`、` `（空格）等），可用英文标点的双引号将关键词括起来（如`"<key word>"`）
 

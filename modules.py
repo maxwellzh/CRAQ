@@ -1,15 +1,17 @@
 #-*- coding:utf-8 -*-
 import sys
 import re
+import datetime
 from getopt import getopt
 
 SPECIAL = {'80000000': '匿名用户', '50000000': '系统提示'}
 WIDTH = int(60)
-BUILD = '20190713'
+DATE = str(datetime.date.today()).replace('-', '')
 
 id_re = re.compile(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)')
 name_re = re.compile(r'.*(?=(\(|<))')
 title_re = re.compile(r'【.*】')
+
 
 class Member(object):
     def __init__(self, ID):
@@ -64,8 +66,8 @@ class Member(object):
                 for Time, message in traversing_dict(this):
                     Time = date + Time
                     Time = '%d-%02d-%02d %02d:%02d:%02d\n' % \
-                                (Time[0], Time[1], Time[2],
-                                 Time[3], Time[4], Time[5])
+                        (Time[0], Time[1], Time[2],
+                         Time[3], Time[4], Time[5])
                     talks += Time + message[1]
                     times += message[0]
                 return times, talks
@@ -140,6 +142,7 @@ def get_info(line):
     # Time = [year, month, day, hour, minute, second]
     return ID, name, Time
 
+
 def menu_usage():
     print('\
 检索方式：\n\
@@ -157,6 +160,7 @@ def menu_usage():
 示例：\n\
     -k 你们 -t end-6:end -n 飞翔的企鹅 -d\n\
     表示在最近1周内查询用户“飞翔的企鹅”包含“你们”的发言，并输出')
+
 
 def proportion_visualize(this, max_count):
     if max_count == 0:
@@ -202,9 +206,10 @@ def date_add(Time, days=1):
             day -= 1
         return date_add([year, month, day], days+1)
 
+
 def get_lines(file_name):
     count = 0
-    if type(file_name)==str:
+    if type(file_name) == str:
         with open(file_name, 'rb') as file:
             while True:
                 buffer = file.read(8192*1024)
@@ -221,18 +226,19 @@ def get_lines(file_name):
         file.seek(0)
     return int(count)
 
+
 def mysearch(members, keyword, time_beg, time_end, method='members', regular=False, redetails=False):
     members_count = {}
     members_lines = {}
 
     if redetails:
         method = 'members'
-    out_str = '>'
+    out_str = '> '
     if time_beg == time_end:
         out_str += '%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2])
     else:
         out_str += '%d-%d-%d:%d-%d-%d期间检索到' % (time_beg[0], time_beg[1], time_beg[2],
-                                            time_end[0], time_end[1], time_end[2])
+                                               time_end[0], time_end[1], time_end[2])
     date_list = []
     time_cur = time_beg
     while(time_cur <= time_end):
@@ -281,7 +287,8 @@ def mysearch(members, keyword, time_beg, time_end, method='members', regular=Fal
                 members_count[ID] = sum(members_count[ID])
                 if members_count[ID] > 0:
                     print('%s' % '='*50)
-                    print('%s<%s>[%d]' % (members[ID].name, ID, members_count[ID]))
+                    print('%s<%s>[%d]' %
+                          (members[ID].name, ID, members_count[ID]))
                     print('%s' % '='*50)
                     print(members_lines[ID])
             return
@@ -293,10 +300,10 @@ def mysearch(members, keyword, time_beg, time_end, method='members', regular=Fal
                 members_lines.pop(ID)
             else:
                 total += members_count[ID]
-        
+
         if len(members_count) > 0:
-            ID_ordered = sorted(members_count.keys(), key=lambda\
-                    item:members_count[item], reverse = True)
+            ID_ordered = sorted(members_count.keys(), key=lambda
+                                item: members_count[item], reverse=True)
             max_count = members_count[ID_ordered[0]]
             width_max = max([4, len(str(max_count))])
 
@@ -308,14 +315,14 @@ def mysearch(members, keyword, time_beg, time_end, method='members', regular=Fal
         else:
             headline = headline + ('次数%s|用户名' % (' '*(width_max-4)))
             part_1st = [members_count[ID] for ID in ID_ordered]
-            part_2nd = ['%d%s' % (x, ' '*(width_max-len(str(x))))\
-                    for x in part_1st]
+            part_2nd = ['%d%s' % (x, ' '*(width_max-len(str(x))))
+                        for x in part_1st]
             part_3rd = [members[x].name for x in ID_ordered]
     else:
         error(1)
 
     if len(part_1st) != len(part_2nd) or \
-           len(part_1st) != len(part_3rd):
+            len(part_1st) != len(part_3rd):
         error(2)
 
     if regular:
@@ -326,14 +333,15 @@ def mysearch(members, keyword, time_beg, time_end, method='members', regular=Fal
         out_str += '消息%d条\n' % total
     print(out_str+headline)
     for i in range(len(part_1st)):
-        print('|%s|%s|%s' % (proportion_visualize(part_1st[i], max_count),\
-              part_2nd[i], part_3rd[i]))
+        print('|%s|%s|%s' % (proportion_visualize(part_1st[i], max_count),
+                             part_2nd[i], part_3rd[i]))
+
 
 def out(members, outfile):
     line_cur = 0
     max_len = 0
     count = 0
-    if type(outfile)==str:
+    if type(outfile) == str:
         with open(outfile, 'wt', encoding='utf-8') as file:
             print('Writing to %s:' % outfile)
             for ID in members.keys():
@@ -342,7 +350,8 @@ def out(members, outfile):
                     max_len = len(ID)
             file.write('QQ ID/Email%sQQ NAME\n' % (' '*(max_len-9)))
             for ID in members.keys():
-                file.write('%s%s%s\n' % (ID, ' '*(max_len-len(ID)+2), members[ID].name))
+                file.write('%s%s%s\n' %
+                           (ID, ' '*(max_len-len(ID)+2), members[ID].name))
             file.write('\n')
             for ID in members.keys():
                 file.write('%s' % '='*50)
@@ -357,8 +366,8 @@ def out(members, outfile):
                     file.write(line[1])
                 line_cur += members[ID].count
                 prop = line_cur/count
-                print('\r%.0f%%|%s%s|' % (prop*100,'#'*int(80*prop), 
-                    '-'*int(80*(1-prop))), end='')
+                print('\r%.0f%%|%s%s|' % (prop*100, '#'*int(80*prop),
+                                          '-'*int(80*(1-prop))), end='')
     else:
         with outfile as file:
             print('Writing:')
@@ -368,7 +377,8 @@ def out(members, outfile):
                     max_len = len(ID)
             file.write('QQ ID/Email%sQQ NAME\n' % (' '*(max_len-9)))
             for ID in members.keys():
-                file.write('%s%s%s\n' % (ID, ' '*(max_len-len(ID)+2), members[ID].name))
+                file.write('%s%s%s\n' %
+                           (ID, ' '*(max_len-len(ID)+2), members[ID].name))
             file.write('\n')
             for ID in members.keys():
                 file.write('%s' % '='*50)
@@ -383,8 +393,27 @@ def out(members, outfile):
                     file.write(line[1])
                 line_cur += members[ID].count
                 prop = line_cur/count
-                print('\r%.0f%%|%s%s|' % (prop*100,'#'*int(80*prop), 
-                    '-'*int(80*(1-prop))), end='')
+                print('\r%.0f%%|%s%s|' % (prop*100, '#'*int(80*prop),
+                                          '-'*int(80*(1-prop))), end='')
+
+
+def msgmerge(members, outfile):
+    # content = [[Time, ID, Msg], ...]
+    # Time = [Year, Month, Day, Hour, Minute, Second]
+    # ID = 'Name(ID)'
+    # Msg = '...'
+    content = []
+    print("Merging...")
+    for Person in members.values():
+        for Time, line in traversing_dict(Person.talks):
+            content.append([Time, "%s(%s)" % (Person.name, Person.id), line])
+    content = sorted(content, key=lambda item: item[0])
+    with outfile as file:
+        file.write('MSG merged at %s.\n\n' % DATE)
+        for msg in content:
+            file.write('%d-%02d-%02d %02d:%02d:%02d %s\n%s' %
+                       (msg[0][0], msg[0][1], msg[0][2], msg[0][3], msg[0][4], msg[0][5], msg[1], msg[2][1]))
+
 
 def menu(members, time_beg, time_end):
     modes = ''
@@ -393,7 +422,8 @@ def menu(members, time_beg, time_end):
     modes = re.findall(r'(?<=").*(?=")|(?!"|\s)\S*', modes)
     modes = modes[:-1]
     short_opts_menu = ['-t:', '-k:', '-a', '-m', '-e', '-r:', '-d', '-n:']
-    long_opts_menu = ['time', 'kwd', 'all', 'member', 'exit', 'regular', 'detail', 'name']
+    long_opts_menu = ['time', 'kwd', 'all', 'member',
+                      'exit', 'regular', 'detail', 'name']
     long_opts_menu = ['--'+x for x in long_opts_menu]
     opts, _ = getopt(modes, ''.join(short_opts_menu),
                      [long_opts_menu[i]+short_opts_menu[i][2:].replace(':', '=') for i in range(len(long_opts_menu))])
@@ -410,17 +440,18 @@ def menu(members, time_beg, time_end):
             method = 'timeline'
             Time = value.split(':')
             for i in range(min([2, len(Time)])):
-                Time[i] = re.sub('beg', ('%d%02d%02d' % \
-                    (time_beg[0], time_beg[1], time_beg[2]))[2:], Time[i])
-                Time[i] = re.sub('end', ('%d%02d%02d' % \
-                    (time_end[0], time_end[1], time_end[2]))[2:], Time[i])
-                
+                Time[i] = re.sub('beg', ('%d%02d%02d' %
+                                         (time_beg[0], time_beg[1], time_beg[2]))[2:], Time[i])
+                Time[i] = re.sub('end', ('%d%02d%02d' %
+                                         (time_end[0], time_end[1], time_end[2]))[2:], Time[i])
+
                 if len(Time[i]) > 6:
                     days = int(Time[i][6:])
                 else:
                     days = 0
-                
-                date = [2000+int(Time[i][:2]), int(Time[i][2:4]), int(Time[i][4:6])]
+
+                date = [2000+int(Time[i][:2]), int(Time[i]
+                                                   [2:4]), int(Time[i][4:6])]
                 Time[i] = date_add(date, days)
 
             if len(Time) == 1:
@@ -441,7 +472,7 @@ def menu(members, time_beg, time_end):
         elif op in (short_opts_menu[3][:2], '--'+long_opts_menu[3]):    # -m
             method = 'members'
         elif op in (short_opts_menu[4][:2], '--'+long_opts_menu[4]):    # -e
-            sys.exit()
+            sys.exit(0)
         elif op in (short_opts_menu[5][:2], '--'+long_opts_menu[5]):    # -r:
             if keyword != '':
                 error(3)
@@ -452,13 +483,12 @@ def menu(members, time_beg, time_end):
         elif op in (short_opts_menu[7][:2], '--'+long_opts_menu[7]):    # -n:
             for ID in members.keys():
                 if members[ID].name == value:
-                    this = {ID:members[ID]}
+                    this = {ID: members[ID]}
                     break
-            if this == members:        
+            if this == members:
                 error(10)
                 return
 
-    
     if len(opts) == 0:
         error(6)
         menu_usage()
@@ -467,8 +497,9 @@ def menu(members, time_beg, time_end):
         error(7)
         return
 
-    mysearch(this, keyword, lower_bound, \
-            upper_bound, method, regular, redetails)
+    mysearch(this, keyword, lower_bound,
+             upper_bound, method, regular, redetails)
+
 
 def error(err):
     err_dict = {
@@ -478,12 +509,12 @@ def error(err):
         3: 'main(): \'-k\'(--kwd)和\'-r\'(--regular)参数不可同时使用.',
         4: 'main(): 输入文件位置无效.',
         5: 'main(): 输入文件非.txt格式.',
-        6: '>输入参数有误',
-        7: '>注意时间顺序',
+        6: '> 输入参数有误',
+        7: '> 注意时间顺序',
         8: '',
-        9: '>\'-d\'选项仅在正则搜索下可用.',
-        10:'>找不到指定用户（若用户名含有空格请用英文引号括起来）'
+        9: '> \'-d\'选项仅在正则搜索下可用.',
+        10: '> 找不到指定用户（若用户名含有空格请用英文引号括起来）'
     }
     print(err_dict[err])
     if err in range(6):
-        sys.exit()
+        sys.exit(-1)

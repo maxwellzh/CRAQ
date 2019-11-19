@@ -15,22 +15,24 @@ import re
 
 Member = modules.Member
 VERSION = str(datetime.date.today()).replace('-', '')
-parser = argparse.ArgumentParser(description=("QQ消息文本搜索[%s]" % VERSION), 
-    epilog="获取更详细帮助信息：https://github.com/maxwellzh/CRAQ/blob/master/README.md")
-parser._actions[0].help="显示当前信息."
-parser.add_argument("-i", help="指定输入文件，只添加-i参数时进入菜单模式（推荐）.", 
-    metavar="in-file", type=argparse.FileType('rt', encoding='utf-8'), nargs='+', dest="infile")
-parser.add_argument("-o", help="指定输出文件.", metavar="out-file", 
-    type=argparse.FileType('wt', encoding='utf-8'), dest="outfile")
+parser = argparse.ArgumentParser(description=("QQ消息文本搜索[%s]" % VERSION),
+                                 epilog="获取更详细帮助信息：https://github.com/maxwellzh/CRAQ/blob/master/README.md")
+parser._actions[0].help = "显示当前信息."
+parser.add_argument("-i", help="指定输入文件，只添加-i参数时进入菜单模式（推荐）.",
+                    metavar="in-file", type=argparse.FileType('rt', encoding='utf-8'), nargs='+', dest="infile")
+parser.add_argument("-o", help="指定输出文件.", metavar="out-file",
+                    type=argparse.FileType('wt', encoding='utf-8'), dest="outfile")
+parser.add_argument("-m", help="整合消息记录.", metavar="out-file",
+                    type=argparse.FileType('wt', encoding='utf-8'), dest="mergefile")
 search_group = parser.add_mutually_exclusive_group()
 search_group.add_argument("-k", help="指定关键词，不与-r同时使用.",
-    action="store", dest="keyword")
+                          action="store", dest="keyword")
 search_group.add_argument("-r", help="使用正则表达式搜索，不与-k同时使用.",
-    action="store", dest="regular")
+                          action="store", dest="regular")
 search_group.add_argument("-c", "--count", help="消息统计.", action="store_true",
-    default=False, dest="count")
+                          default=False, dest="count")
 parser.add_argument("-v", "--version", help="显示当前程序版本", action="version",
-    version=VERSION)
+                    version=VERSION)
 
 
 def main():
@@ -40,12 +42,13 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(-1)
     # Not specify input file but ask for behavior like "-k, -r..."
-    if args.infile==None:
+    if args.infile == None:
         print("未指定输入文件.")
         sys.exit(-1)
 
     infile = args.infile
     outfile = args.outfile
+    mergerfile = args.mergefile
     keyword = args.keyword
     regular = args.regular
     count_enable = args.count
@@ -58,6 +61,7 @@ def main():
 
     # read and process input file
     is_new = re.compile(r'\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*\n')
+    print("Reading...")
     for f in infile:
         with f as file:
             data = file.read()
@@ -78,12 +82,14 @@ def main():
             if Time[:3] > time_end:
                 time_end = Time[:3]
 
-            count+=len(info)
+    count = sum([person.count for person in members.values()])
     print('%d-%d-%d:%d-%d-%d期间检索到消息记录%d条' % (time_beg[0], time_beg[1], time_beg[2],
-                                        time_end[0], time_end[1], time_end[2], count))
+                                             time_end[0], time_end[1], time_end[2], count))
 
     if outfile != None:
         modules.out(members, outfile)
+    if mergerfile != None:
+        modules.msgmerge(members, mergerfile)
     if count_enable:
         modules.mysearch(members, '', time_beg, time_end)
     elif keyword != None:
@@ -92,10 +98,11 @@ def main():
         modules.mysearch(members, regular, time_beg, time_end, regular=True)
 
     # Only -i option, enter MENU mode
-    if not args.count and args.keyword==None and args.outfile==None and args.regular==None:
+    if not args.count and args.keyword == None and args.outfile == None and args.regular == None and args.mergefile == None:
         modules.menu_usage()
         while True:
             modules.menu(members, time_beg, time_end)
+
 
 if __name__ == '__main__':
     main()

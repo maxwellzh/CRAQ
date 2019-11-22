@@ -366,8 +366,8 @@ def out(members, outfile):
                     file.write(line[1])
                 line_cur += members[ID].count
                 prop = line_cur/count
-                print('\r%.0f%%|%s%s|' % (prop*100, '#'*int(80*prop),
-                                          '-'*int(80*(1-prop))), end='')
+                print('\r%.0f%%|%s%s|' %
+                      (prop*100, '#'*int(80*prop), '-'*int(80*(1-prop))), end='')
     else:
         with outfile as file:
             print('Writing:')

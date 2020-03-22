@@ -60,7 +60,7 @@ def main():
     Time = []
 
     # read and process input file
-    is_new = re.compile(r'\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*\n')
+    is_new = re.compile(r'(?<=\n)\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*\n')
     print("Reading...")
     for f in infile:
         with f as file:

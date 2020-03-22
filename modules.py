@@ -130,6 +130,11 @@ def get_info(line):
         info = info[:2] + [' '.join(info[2:])]
     Time = info[0].split('-')+info[1].split(':')
     Time = [int(s) for s in Time]
+
+    if len(info) < 3:
+        print(line)
+        exit(-1)
+    
     name = name_re.search(info[2]).group()
     # deal with title, could be used if needed
     title = title_re.search(name)

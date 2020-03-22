@@ -9,8 +9,8 @@
 目前仅支持`.txt`文本格式，使用帮助
 
 ```shell
-$ .\search.exe -h
-usage: search.py [-h] [-i in-file [in-file ...]] [-o out-file] [-m out-file] [-k KEYWORD | -r REGULAR | -c] [-v]
+$ .\craq.exe -h
+usage: craq.py [-h] [-i in-file [in-file ...]] [-o out-file] [-m out-file] [-k KEYWORD | -r REGULAR | -c] [-v]
 
 QQ消息文本搜索[20191119]
 
@@ -31,8 +31,8 @@ optional arguments:
 - `-i`指定输入文件位置，除打印帮助信息外为必须选项；只有该选项时会进入菜单模式；可使用` `（空格）连接多个文件或正则式同时处理，如
 
   ```shell
-  $ search.exe -i .\file1.txt .\file2.txt
-  $ search.exe -i *.txt
+  $ craq.exe -i .\file1.txt .\file2.txt
+  $ craq.exe -i *.txt
   ```
 
 - `-o`指定输出文件位置，将处理后文本信息输出到指定文件中，若文件不存在则会新建，**文件已存在会覆盖！**
@@ -48,7 +48,7 @@ optional arguments:
 ### 菜单模式
 
 ```shell
-$ .\search.exe -i .\talk.txt
+$ .\craq.exe -i .\talk.txt
                                                                                          2019-8-4:2019-11-15期间检索到消息记录16141条
 
 检索方式：
@@ -85,7 +85,7 @@ $ .\search.exe -i .\talk.txt
 ### 简单模式
 
 ```shell
-$ .\search.exe -i .\talk.txt -k 猪
+$ .\craq.exe -i .\talk.txt -k 猪
                                                                                          2019-8-4:2019-11-15期间检索到消息记录16141条
 
 >2019-8-4:2019-11-15期间检索到关键词'猪'15次

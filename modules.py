@@ -8,9 +8,9 @@ SPECIAL = {'80000000': '匿名用户', '50000000': '系统提示'}
 WIDTH = int(60)
 DATE = str(datetime.date.today()).replace('-', '')
 
-id_re = re.compile(r'(?<=\()(.(?!\())*(?=\)$)|(?<=<)(.(?!<))*(?=>$)')
-name_re = re.compile(r'.*(?=(\(|<))')
-title_re = re.compile(r'【.*】')
+id_re = re.compile(r'(?<=[>)])[^<(]*(?=[<(])')
+name_re = re.compile(r'[^(<]*')
+title_re = re.compile(r'【[^】]*】')
 
 
 class Member(object):
@@ -127,22 +127,25 @@ def get_info(line):
 
     info = line.split(' ')
     if len(info) > 3:
+        # deal with the situation where nickname contains space
         info = info[:2] + [' '.join(info[2:])]
     Time = info[0].split('-')+info[1].split(':')
     Time = [int(s) for s in Time]
 
     if len(info) < 3:
-        print(line)
-        exit(-1)
-    
-    name = name_re.search(info[2]).group()
+        print(line + "\nError:No nickname & ID")
+        sys.exit(-1)
+
+    pInfo = info[2][:-1]
+    ID = id_re.search(pInfo[::-1]).group()
+    ID = ID[::-1]
+    name = pInfo[:len(pInfo)-len(ID)-2]
+
     # deal with title, could be used if needed
     title = title_re.search(name)
     if title != None:
         title = title.group()
         name = name.lstrip(title)
-
-    ID = id_re.search(info[2]).group()
 
     # Time = [year, month, day, hour, minute, second]
     return ID, name, Time
@@ -161,7 +164,8 @@ def menu_usage():
     -r, --regular <pattern>         使用正则表达式搜索，不可与-k共同使用.\n\
     -d, --detail                    添加可输出详细信息.\n\
     -n, --name <name>               查询特定用户发言\n\
-    -e, --exit                      退出（或ctrl+c）.\n\n\
+    -e, --exit                      退出（或ctrl+c）.\n\
+    -h, --help                      显示帮助信息.\n\n\
 示例：\n\
     -k 你们 -t end-6:end -n 飞翔的企鹅 -d\n\
     表示在最近1周内查询用户“飞翔的企鹅”包含“你们”的发言，并输出')
@@ -426,9 +430,9 @@ def menu(members, time_beg, time_end):
         modes = str(input('> '))
     modes = re.findall(r'(?<=").*(?=")|(?!"|\s)\S*', modes)
     modes = modes[:-1]
-    short_opts_menu = ['-t:', '-k:', '-a', '-m', '-e', '-r:', '-d', '-n:']
+    short_opts_menu = ['-t:', '-k:', '-a', '-m', '-e', '-r:', '-d', '-n:', '-h']
     long_opts_menu = ['time', 'kwd', 'all', 'member',
-                      'exit', 'regular', 'detail', 'name']
+                      'exit', 'regular', 'detail', 'name', 'help']
     long_opts_menu = ['--'+x for x in long_opts_menu]
     opts, _ = getopt(modes, ''.join(short_opts_menu),
                      [long_opts_menu[i]+short_opts_menu[i][2:].replace(':', '=') for i in range(len(long_opts_menu))])
@@ -493,6 +497,9 @@ def menu(members, time_beg, time_end):
             if this == members:
                 error(10)
                 return
+        elif op in (short_opts_menu[8][:2], '--'+long_opts_menu[8]):    # -h
+            menu_usage()
+            return
 
     if len(opts) == 0:
         error(6)

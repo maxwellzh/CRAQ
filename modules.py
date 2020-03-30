@@ -176,7 +176,7 @@ def proportion_visualize(this, max_count):
         width_this = int(0)
     else:
         width_this = int(this/max_count*WIDTH)
-    return '%s%s' % (' '*(WIDTH-width_this), '#'*width_this)
+    return '%s%s' % (' '*(WIDTH-width_this), '█'*width_this)
 
 
 def date_add(Time, days=1):

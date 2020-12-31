@@ -1,5 +1,4 @@
-#!usr/bin/python
-#-*- coding:utf-8 -*-
+
 '''
 message type:
 xxxx-xx-xx xx:xx:xx 【title】NAME(ID)/【title】NAME<Email>
@@ -9,28 +8,21 @@ r'^\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{1,2}:\d{1,2}\s.*(\(\d+\)|<.*>)$'
 import os.path as path
 import argparse
 import datetime
-import modules
 import sys
 import re
+from modules import RecordData, menu, msgmerge
 
-Member = modules.Member
 VERSION = str(datetime.date.today()).replace('-', '')
 parser = argparse.ArgumentParser(description=("QQ消息文本搜索[%s]" % VERSION),
                                  epilog="获取更详细帮助信息：https://github.com/maxwellzh/CRAQ/blob/master/README.md")
 parser._actions[0].help = "显示当前信息."
-parser.add_argument("-i", help="指定输入文件，只添加-i参数时进入菜单模式（推荐）.",
-                    metavar="in-file", type=argparse.FileType('rt', encoding='utf-8'), nargs='+', dest="infile")
-parser.add_argument("-o", help="指定输出文件.", metavar="out-file",
-                    type=argparse.FileType('wt', encoding='utf-8'), dest="outfile")
-parser.add_argument("-m", help="整合消息记录.", metavar="out-file",
-                    type=argparse.FileType('wt', encoding='utf-8'), dest="mergefile")
-search_group = parser.add_mutually_exclusive_group()
-search_group.add_argument("-k", help="指定关键词，不与-r同时使用.",
-                          action="store", dest="keyword")
-search_group.add_argument("-r", help="使用正则表达式搜索，不与-k同时使用.",
-                          action="store", dest="regular")
-search_group.add_argument("-c", "--count", help="消息统计.", action="store_true",
-                          default=False, dest="count")
+parser.add_argument("-i", type=str,
+                    metavar="in-file",  nargs='+', dest="infile",
+                    help="指定输入文件，只添加-i参数时进入菜单模式（推荐）.")
+
+parser.add_argument("-m", type=str, metavar="out-file", dest="mergefile",
+                    help="整合消息记录.")
+
 parser.add_argument("-v", "--version", help="显示当前程序版本", action="version",
                     version=VERSION)
 
@@ -42,68 +34,43 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(-1)
     # Not specify input file but ask for behavior like "-k, -r..."
-    if args.infile == None:
+    if args.infile is None:
         print("未指定输入文件.")
         sys.exit(-1)
 
     infile = args.infile
-    outfile = args.outfile
-    mergerfile = args.mergefile
-    keyword = args.keyword
-    regular = args.regular
-    count_enable = args.count
+    mergefile = args.mergefile
 
-    members = {}
-    count = 0
-    time_beg = [9999]  # only accurate to day
-    time_end = []
-    Time = []
+    record = RecordData()
 
     # read and process input file
     is_new = re.compile(
         r'(?<=\n)\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\s[^\n(<]*[(<][^)>]*[)>]\n'
     )
     print("Reading...")
-    for f in infile:
-        with f as file:
-            data = file.read()
-            #print(data[:300])
+    width = '60'
+    for file in infile:
+
+        with open(file, 'r') as fi:
+            data = fi.read()
             info = is_new.findall(data)
             msg = is_new.split(data)
-            for i in range(len(info)):
-                ID, name, Time = modules.get_info(info[i])
-                if ID not in members:
-                    # a new member
-                    members[ID] = Member(ID)
-                members[ID].new_message(name, Time, msg[i+1])
-            #print(info==None)
-            _, _, Time = modules.get_info(info[0])
-            if Time[:3] < time_beg:
-                time_beg = Time[:3]
-            _, _, Time = modules.get_info(info[-1])
-            if Time[:3] > time_end:
-                time_end = Time[:3]
-
-    count = sum([person.count for person in members.values()])
-    print('%d-%d-%d:%d-%d-%d期间检索到消息记录%d条' % (time_beg[0], time_beg[1], time_beg[2],
-                                             time_end[0], time_end[1], time_end[2], count))
-
-    if outfile != None:
-        modules.out(members, outfile)
-    if mergerfile != None:
-        modules.msgmerge(members, mergerfile)
-    if count_enable:
-        modules.mysearch(members, '', time_beg, time_end)
-    elif keyword != None:
-        modules.mysearch(members, keyword, time_beg, time_end, regular=False)
-    elif regular != None:
-        modules.mysearch(members, regular, time_beg, time_end, regular=True)
+            assert len(info) == len(msg) - 1
+            total_len = len(info)
+            log_interval = total_len//60
+            for i, (line, message) in enumerate(zip(info, msg[1:])):
+                record.add_msg(line, message)
+                if i % log_interval == log_interval - 1:
+                    print(("\r{}: |{:<"+width+"}|").format(file,
+                                                           (i+1)*60//total_len * '█'), end='')
+        print(" 群员数: {} 消息数: {}".format(record.size_group, record.size_msg))
 
     # Only -i option, enter MENU mode
-    if not args.count and args.keyword == None and args.outfile == None and args.regular == None and args.mergefile == None:
-        modules.menu_usage()
-        while True:
-            modules.menu(members, time_beg, time_end)
+    if args.mergefile == None:
+        print("交互模式")
+        menu(record)
+    else:
+        msgmerge(record, mergefile)
 
 
 if __name__ == '__main__':

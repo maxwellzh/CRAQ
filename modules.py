@@ -206,10 +206,10 @@ class RecordData(object):
                     tmp_str = ''
             out_str += crossline + '\n'
         else:
-            if iskwd:
-                count_member = OrderedDict({key: '' for key in member.keys()})
-            else:
-                count_member = OrderedDict({key: 0 for key in member.keys()})
+            if regular:
+                reg = re.compile(r'%s' % kwd, flags=re.MULTILINE)
+
+            count_member = OrderedDict({key: 0 for key in member.keys()})
 
             lower, upper = t_beg, date_add(t_end)
 
@@ -220,20 +220,17 @@ class RecordData(object):
                 if t_msg >= lower and t_msg < upper:
                     ID = format_msg[1]
                     if ID in count_member:
-                        count_member[ID] += format_msg[2] if iskwd else 1
+                        if iskwd:
+                            if regular:
+                                result = reg.findall(format_msg[2])
+                                count_member[ID] += len(result)
+                            else:
+                                count_member[ID] += format_msg[2].count(kwd)
+                        else:
+                            count_member[ID] += 1
 
                 if t_msg >= upper:
                     break
-
-            if iskwd:
-                if regular:
-                    reg = re.compile(r'%s' % kwd, flags=re.MULTILINE)
-                    for ID, msg in count_member.items():
-                        result = reg.findall(msg)
-                        count_member[ID] = len(result)
-                else:
-                    for ID, msg in count_member.items():
-                        count_member[ID] = msg.count(kwd)
 
             total = sum(count_member.values())
             if kwd:

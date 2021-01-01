@@ -1,4 +1,5 @@
 import re
+import sys
 import datetime
 import shlex
 import argparse
@@ -56,10 +57,11 @@ class RecordData(object):
         self._member = OrderedDict()
         self._msg = []
         self.is_t_sorted = True
+        self._countmsg = 0
 
     @property
     def size_msg(self):
-        return len(self._msg)
+        return self._countmsg
 
     @property
     def size_group(self):
@@ -79,6 +81,12 @@ class RecordData(object):
 
     def sort_time(self):
         self._msg = sorted(self._msg, key=lambda x: x[0])
+        for state in self._member.values():
+            del state['msg']
+            state['msg'] = []
+        for i, msg in enumerate(self._msg):
+            _, ID, _ = msg
+            self._member[ID]['msg'].append(i)
         self.is_t_sorted = True
 
     def add_msg(self, infoline, msg):
@@ -95,6 +103,7 @@ class RecordData(object):
 
         format_msg = (Time, ID, msg)
         self._msg.append(format_msg)
+        self._countmsg += 1
 
         t_end = self.when_end
         if Time < t_end:
@@ -120,6 +129,7 @@ class RecordData(object):
             member = self._member
 
         iskwd = False if kwd is None else True
+        self.sort_time()
 
         if mode == 'time':
             count = []
@@ -127,10 +137,17 @@ class RecordData(object):
             count_day = '' if iskwd else 0
             lower, upper = t_beg, date_add(t_beg)
 
+            if len(member.keys()) == 1:
+                _msg = [[self._msg[i] for i in state['msg']]
+                        for _, state in member.items()]
+                _msg = _msg[0]
+            else:
+                _msg = self._msg
+
             # this is a trick
-            self._msg.append((date_add(t_end), None, ''))
+            _msg.append((date_add(t_end), None, ''))
             quit_flag = False
-            for format_msg in self._msg:
+            for format_msg in _msg:
                 t_msg = format_msg[0][:3]
                 if t_msg < lower:
                     continue
@@ -151,11 +168,10 @@ class RecordData(object):
                     if lower > t_end:
                         quit_flag = True
                         break
-
                 if quit_flag:
                     break
                 count_day += format_msg[2] if iskwd else 1
-            self._msg.pop()
+            _msg.pop()
 
             lower = date_add(lower)
             while lower <= t_end:
@@ -206,31 +222,63 @@ class RecordData(object):
                     tmp_str = ''
             out_str += crossline + '\n'
         else:
-            if regular:
-                reg = re.compile(r'%s' % kwd, flags=re.MULTILINE)
 
-            count_member = OrderedDict({key: 0 for key in member.keys()})
+            count_member = {key: 0 for key in member.keys()}
 
             lower, upper = t_beg, date_add(t_end)
 
-            self.sort_time()
+            outmsg = {key: [] for key in member.keys()}
 
-            for format_msg in self._msg:
-                t_msg = format_msg[0][:3]
-                if t_msg >= lower and t_msg < upper:
-                    ID = format_msg[1]
-                    if ID in count_member:
-                        if iskwd:
+            if t_beg == self.when_beg[:3] and t_end == self.when_end[:3]:
+                if not iskwd:
+                    for ID, state in member.items():
+                        count_member[ID] = len(state['msg'])
+                        outmsg[ID] = state['msg']
+                else:
+                    if regular:
+                        reg = re.compile(r'%s' % kwd, flags=re.MULTILINE)
+                    for ID, state in member.items():
+                        for id_msg in state['msg']:
+                            msg = self._msg[id_msg][2]
                             if regular:
-                                result = reg.findall(format_msg[2])
-                                count_member[ID] += len(result)
+                                result = reg.findall(msg)
+                                C = len(result)
                             else:
-                                count_member[ID] += format_msg[2].count(kwd)
-                        else:
-                            count_member[ID] += 1
+                                C = msg.count(kwd)
 
-                if t_msg >= upper:
-                    break
+                            if C > 0:
+                                if redetails:
+                                    outmsg[ID].append(id_msg)
+                                count_member[ID] += C
+            elif not iskwd:
+                for ID, state in member.items():
+                    for id_msg in state['msg']:
+                        format_msg = self._msg[id_msg]
+                        t_msg = format_msg[0][:3]
+                        if t_msg < lower or t_msg >= upper:
+                            continue
+                        count_member[ID] += 1
+                        if redetails:
+                            outmsg[ID].append(id_msg)
+            else:
+                if regular:
+                    reg = re.compile(r'%s' % kwd, flags=re.MULTILINE)
+                for ID, state in member.items():
+                    for id_msg in state['msg']:
+                        format_msg = self._msg[id_msg]
+                        t_msg = format_msg[0][:3]
+                        if t_msg < lower or t_msg >= upper:
+                            continue
+                        if regular:
+                            result = reg.findall(format_msg[2])
+                            C = len(result)
+                        else:
+                            C = format_msg[2].count(kwd)
+
+                        if C > 0:
+                            if redetails:
+                                outmsg[ID].append(id_msg)
+                            count_member[ID] += C
 
             total = sum(count_member.values())
             if kwd:
@@ -269,6 +317,18 @@ class RecordData(object):
                         j, max_count), j,  self._member[i]['name'])
             out_str += crossline + '\n'
 
+            if redetails:
+                for ID in outmsg:
+                    if len(outmsg[ID]) == 0:
+                        continue
+                    out_str += '{:^{}}\n'.format("{}发送了{}次".format(
+                        self._member[ID]['name'], len(outmsg[ID])), len(crossline)-4)
+                    out_str += crossline + '\n'
+                    for i in outmsg[ID]:
+                        Time, ID, messages = self._msg[i]
+                        out_str += '{:4d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d} {}({})\n{}'.format(
+                            *Time, self._member[ID]['name'], ID, messages)
+                    out_str += crossline + '\n'
         return out_str
 
 
@@ -342,13 +402,14 @@ def msgmerge(record: RecordData, outfile):
     # Time = [Year, Month, Day, Hour, Minute, Second]
     # ID = 'Name(ID)'
     # Msg = '...'
-    print("Merging...")
+    print("合并中...")
     msg = record._msg
     with open(outfile, 'w') as fo:
         fo.write('MSG merged at %s.\n\n' % DATE)
         for Time, ID, messages in msg:
             fo.write('%d-%02d-%02d %02d:%02d:%02d %s(%s)\n%s' %
                      (*Time, record._member[ID]['name'], ID, messages))
+    print('文件合并完毕: {}'.format(outfile))
 
 
 def menu(record: RecordData):
@@ -364,8 +425,8 @@ def menu(record: RecordData):
                         help="统计所有信息，会覆盖其他参数（-k -r -t）.")
     parser.add_argument('-m', action="store_true", default=False, dest='ismem',
                         help="按照成员发言数输出（默认为按日期输出）.")
-    # parser.add_argument('-d', action="store_true", default=False, dest='require_details',
-    #                     help="输出详细信息.")
+    parser.add_argument('-d', action="store_true", default=False, dest='require_details',
+                        help="输出详细信息.")
     parser.add_argument('-n', type=str, default=None, dest='name', metavar='name|ID',
                         help="查询特定用户发言.")
     parser.add_argument('-e', action="store_true", default=False, dest='exit',
@@ -376,7 +437,9 @@ def menu(record: RecordData):
     while True:
         argstring = ''
         while(argstring == ''):
-            argstring = str(input('>>> '))
+            sys.stdin.flush()
+            sys.stdout.flush()
+            argstring = input('>>> ')
         try:
             args = parser.parse_args(shlex.split(argstring))
         except SystemExit:
@@ -452,12 +515,30 @@ def menu(record: RecordData):
                 t_beg, t_end = _gettime(
                     args.time, t_beg), _gettime(args.time, t_end)
 
+        if args.name is not None:
+            if args.name in record._member:
+                name = args.name
+            else:
+                L = [ID for ID, state in record._member.items()
+                     if state['name'] == args.name]
+                if len(L) == 0:
+                    print("记录中没找到群员: {}".format(args.name))
+                    continue
+                elif len(L) > 1:
+                    print("有{}名群员都叫做: {}".format(len(L), args.name))
+                    print("{}".format('  '.join(L)))
+                    continue
+                else:
+                    name = L[0]
+        else:
+            name = None
+
         if args.ismem:
             outstr = record.search(
-                t_beg, t_end, kwd=keyword, ID=args.name, regular=regular)
+                t_beg, t_end, kwd=keyword, ID=name, regular=regular, redetails=args.require_details)
         else:
-            outstr = record.search(t_beg, t_end,
-                                   kwd=keyword, mode='time', ID=args.name, regular=regular)
+            outstr = record.search(t_beg, t_end, kwd=keyword, ID=name,
+                                   mode='time', regular=regular, redetails=args.require_details)
 
         print(outstr)
         continue
